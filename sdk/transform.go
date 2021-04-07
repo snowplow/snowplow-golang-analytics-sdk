@@ -7,6 +7,7 @@ import (
 	"time"
   "encoding/csv"
   "strings"
+	"github.com/pkg/errors"
 	// "github.com/pkg/errors"
 
 
@@ -23,7 +24,7 @@ type KeyVals struct {
 	Value interface{}
 }
 
-type ValueParser func(string, string) []KeyVals
+type ValueParser func(string, string) ([]KeyVals, error)
 
 type KeyFunctionPair struct {
 	Key  string
@@ -33,58 +34,63 @@ type KeyFunctionPair struct {
 // TODO: CHECK IF WE EVEN NEED TO DO THESE TSTAMP FUNCTIONS - OTHER SDKS JUST HANDLE IT AS A STRING
 // Is parse the correct nomenclature?
 // rename to parseTstamp?
-func parseNullableTime(timeString string) *time.Time {
+func parseNullableTime(timeString string) (*time.Time, error) { // Probably no need for a pointer here since we're manually parsing the whole thing
 	timeLayout := "2006-01-02 15:04:05.999"
-	res, _ := time.Parse(timeLayout, timeString)
+	res, err := time.Parse(timeLayout, timeString)
+	if err != nil {
+		return nil, errors.Wrap(err, fmt.Sprintf("Error parsing timestamp value '%s'", timeString))
+	}
 	if time.Time.IsZero(res) {
-		return nil
+		return nil, nil
 	} else {
-		return &res
+		return &res, nil
 	}
 }
 
 // These should all probably return KeyVals, err
 // Also perhaps they should all return slices - because the custom contexts one returns arbitrary length...
-func parseTime(key string, value string) []KeyVals {
-	return []KeyVals{KeyVals{key, parseNullableTime(value)}}
+func parseTime(key string, value string) ([]KeyVals, error) {
+	out, err := parseNullableTime(value)
+	if err != nil {
+		return nil, err
+	}
+	return []KeyVals{KeyVals{key, out}}, err
 }
 
-func parseString(key string, value string) []KeyVals {
-	return []KeyVals{KeyVals{key, value}}
+func parseString(key string, value string) ([]KeyVals, error) {
+	return []KeyVals{KeyVals{key, value}}, nil
 }
 
-func parseInt(key string, value string) []KeyVals {
+func parseInt(key string, value string) ([]KeyVals, error) {
 	intvalue, err := strconv.Atoi(value)
 	if err != nil {
-		fmt.Println(err)
+		return nil, err
 	}
-	return []KeyVals{KeyVals{key, intvalue}}
+	return []KeyVals{KeyVals{key, intvalue}}, err
 }
 
-func parseBool(key string, value string) []KeyVals {
+func parseBool(key string, value string) ([]KeyVals, error) {
 	boolvalue, err := strconv.ParseBool(value)
 	if err != nil {
-		fmt.Println(err)
+		return nil, err
 	}
-	return []KeyVals{KeyVals{key, boolvalue}}
+	return []KeyVals{KeyVals{key, boolvalue}}, err
 }
 
-func parseDouble(key string, value string) []KeyVals {
+func parseDouble(key string, value string) ([]KeyVals, error) {
 	doubleValue, err := strconv.ParseFloat(value, 64)
 	if err != nil {
-		fmt.Println(err)
+		return nil, err
 	}
-	return []KeyVals{KeyVals{key, doubleValue}}
+	return []KeyVals{KeyVals{key, doubleValue}}, err
 }
 
-func parseContexts(key string, value string) []KeyVals {
-	out, _ := shredContexts(value)
-	return out // TODO: FIX THIS BY CHANGING ALL PARSERS TO RETURN ERRORS ALSO
+func parseContexts(key string, value string) ([]KeyVals, error) {
+	return shredContexts(value) // TODO: FIX THIS BY CHANGING ALL PARSERS TO RETURN ERRORS ALSO
 }
 
-func parseUnstruct(key string, value string) []KeyVals {
-	out, _ := shredUnstruct(value)
-	return out // TODO: FIX THIS BY CHANGING ALL PARSERS TO RETURN ERRORS ALSO
+func parseUnstruct(key string, value string) ([]KeyVals, error) {
+	return shredUnstruct(value) // TODO: FIX THIS BY CHANGING ALL PARSERS TO RETURN ERRORS ALSO
 }
 
 var enrichedEventFieldTypes = [131]KeyFunctionPair{KeyFunctionPair{"app_id", parseString},
@@ -226,7 +232,7 @@ var longitudeIndex = 23
 // Maybe this should be goodEventToMap
 // event is slice because csv package outputs a slice.
 // TODO: figure out how to make it a fixed-length array.
-func jsonifyGoodEvent(event []string, knownFields [131]KeyFunctionPair, addGeolocationData bool) []byte {
+func jsonifyGoodEvent(event []string, knownFields [131]KeyFunctionPair, addGeolocationData bool) ([]byte, error) {
 
   if len(event) != len(knownFields) {
     fmt.Println("Wrong number of fields")
@@ -239,7 +245,10 @@ func jsonifyGoodEvent(event []string, knownFields [131]KeyFunctionPair, addGeolo
       // skip if empty
       if event[index] != "" {
         // apply function if not empty
-        kVPair := knownFields[index].Func(knownFields[index].Key, value)
+        kVPair, err := knownFields[index].Func(knownFields[index].Key, value)
+				if err != nil {
+					return nil, err
+				}
         // append all results
         for _, pair := range kVPair {
           output[pair.Key] = pair.Value
@@ -250,18 +259,18 @@ func jsonifyGoodEvent(event []string, knownFields [131]KeyFunctionPair, addGeolo
     if err != nil {
       fmt.Println(err)
     }
-    return jsonOutput
+    return jsonOutput, nil
   }
   // TODO: Sort return value for unhappy path
   // TODO: Figure out how to split everything up into sensible functions
-  return nil
+  return nil, nil
 }
 
 // Since Golang tries its hardest to design against optional parameters, electing to implement the main Transform function
 // to mirror the most common usage of the function - with addGeolocationData set to true (ie the default in the other SDKs).
 // TODO: Design decisions to be made around what other functions to implement/expose - or how to approach doing other things
 // One option: A method to transform only a specific set of atomic fields - which can be configured to transform all fields without doing the golocation bit...
-func Transform(event string) []byte {
+func Transform(event string) ([]byte, error) {
 
   // I think I prefer to just strings.Split("/t") if we can get away with it. Removes an import, and removes the need to needlessly memory on this reader object too/
 
@@ -274,5 +283,5 @@ func Transform(event string) []byte {
 		fmt.Println(err)
 	}
 
-  return jsonifyGoodEvent(record, enrichedEventFieldTypes, true)
+  return jsonifyGoodEvent(record, enrichedEventFieldTypes, true) // Maybe json marshalling should be done here and the inner function should return a map - then we can have methods to return the map also.
 }
