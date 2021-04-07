@@ -135,16 +135,19 @@ func shredContexts(contexts string) ([]KeyVals, error) {
 	return out, nil
 }
 
-func shredUnstruct(unstruct string) []KeyVals {
+func shredUnstruct(unstruct string) ([]KeyVals, error) {
 
 	event := UnstructEvent{}
 
 	err := json.Unmarshal([]byte(unstruct), &event)
 	if err != nil {
-		fmt.Println("error:", err)
+		return nil, errors.Wrap(err, "Error unmarshaling unstruct event JSON")
 	}
 
 	key, err := fixSchema("unstruct", event.Data.Schema) // TODO: HAndle error
+	if err != nil {
+		return nil, errors.Wrap(err, "Error parsing unstruct event") // Too much nesting of error wrapping?
+	}
 
-	return []KeyVals{KeyVals{key, event.Data.Data}}
+	return []KeyVals{KeyVals{key, event.Data.Data}}, nil
 }

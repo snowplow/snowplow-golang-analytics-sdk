@@ -79,11 +79,12 @@ func parseDouble(key string, value string) []KeyVals {
 
 func parseContexts(key string, value string) []KeyVals {
 	out, _ := shredContexts(value)
-	return out // TODO: FIX THIS BY CHANGING ALL PARSERS TO RETURN ERRORS ALSO 
+	return out // TODO: FIX THIS BY CHANGING ALL PARSERS TO RETURN ERRORS ALSO
 }
 
 func parseUnstruct(key string, value string) []KeyVals {
-	return shredUnstruct(value)
+	out, _ := shredUnstruct(value)
+	return out // TODO: FIX THIS BY CHANGING ALL PARSERS TO RETURN ERRORS ALSO
 }
 
 var enrichedEventFieldTypes = [131]KeyFunctionPair{KeyFunctionPair{"app_id", parseString},
