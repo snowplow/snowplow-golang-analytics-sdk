@@ -40,8 +40,8 @@ func parseNullableTime(timeString string) (*time.Time, error) { // Probably no n
 	if err != nil {
 		return nil, errors.Wrap(err, fmt.Sprintf("Error parsing timestamp value '%s'", timeString))
 	}
-	if time.Time.IsZero(res) {
-		return nil, nil
+	if time.Time.IsZero(res) { // This might actually not be necessary as the above returns an error in this case?
+		return nil, errors.New(fmt.Sprintf("Timestamp string '%s' resulted in zero-value timestamp", timeString))
 	} else {
 		return &res, nil
 	}
@@ -52,45 +52,48 @@ func parseNullableTime(timeString string) (*time.Time, error) { // Probably no n
 func parseTime(key string, value string) ([]KeyVals, error) {
 	out, err := parseNullableTime(value)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, key)
 	}
 	return []KeyVals{KeyVals{key, out}}, err
 }
 
-func parseString(key string, value string) ([]KeyVals, error) {
+func parseString(key string, value string) ([]KeyVals, error) { // throw an error if it's a zero string?
+	if value == "" {
+		return nil, errors.Wrap(errors.New("Zero value found for string"), key)
+	}
 	return []KeyVals{KeyVals{key, value}}, nil
 }
 
 func parseInt(key string, value string) ([]KeyVals, error) {
-	intvalue, err := strconv.Atoi(value)
+	intValue, err := strconv.Atoi(value)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, key) // maybe an error message as well as the key? "Cannot parse field '%s'"? - in fact maybe there should be a specific error class for it?
 	}
-	return []KeyVals{KeyVals{key, intvalue}}, err
+	return []KeyVals{KeyVals{key, intValue}}, err
 }
 
 func parseBool(key string, value string) ([]KeyVals, error) {
-	boolvalue, err := strconv.ParseBool(value)
+	boolValue, err := strconv.ParseBool(value)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, key)
 	}
-	return []KeyVals{KeyVals{key, boolvalue}}, err
+	return []KeyVals{KeyVals{key, boolValue}}, err
 }
 
 func parseDouble(key string, value string) ([]KeyVals, error) {
 	doubleValue, err := strconv.ParseFloat(value, 64)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, key)
 	}
 	return []KeyVals{KeyVals{key, doubleValue}}, err
 }
 
 func parseContexts(key string, value string) ([]KeyVals, error) {
-	return shredContexts(value) // TODO: FIX THIS BY CHANGING ALL PARSERS TO RETURN ERRORS ALSO
+	return shredContexts(value)
 }
 
 func parseUnstruct(key string, value string) ([]KeyVals, error) {
-	return shredUnstruct(value) // TODO: FIX THIS BY CHANGING ALL PARSERS TO RETURN ERRORS ALSO
+	return shredUnstruct(value)
 }
 
 var enrichedEventFieldTypes = [131]KeyFunctionPair{KeyFunctionPair{"app_id", parseString},
@@ -228,14 +231,13 @@ var enrichedEventFieldTypes = [131]KeyFunctionPair{KeyFunctionPair{"app_id", par
 var latitudeIndex = 22
 var longitudeIndex = 23
 
-// CSV string to be parsed before this function.
-// Maybe this should be goodEventToMap
-// event is slice because csv package outputs a slice.
-// TODO: figure out how to make it a fixed-length array.
-func jsonifyGoodEvent(event []string, knownFields [131]KeyFunctionPair, addGeolocationData bool) ([]byte, error) {
 
-  if len(event) != len(knownFields) {
-    fmt.Println("Wrong number of fields")
+// event is slice because csv package outputs a slice.
+// TODO: figure out if we can make event a fixed-length array.
+	// Not using the csv package to parse might be a good way - but let's decide that based on what's fastest and most reliable.
+func mapifyGoodEvent(event []string, knownFields [131]KeyFunctionPair, addGeolocationData bool) (map[string]interface{}, error) {
+	if len(event) != len(knownFields) {
+    return nil, errors.New("Cannot transform event - wrong number of fields")
   } else {
     output := make(map[string]interface{})
     if addGeolocationData && event[latitudeIndex] != "" && event[longitudeIndex] != "" {
@@ -255,33 +257,39 @@ func jsonifyGoodEvent(event []string, knownFields [131]KeyFunctionPair, addGeolo
         }
       }
     }
-    jsonOutput, err := json.Marshal(output)
-    if err != nil {
-      fmt.Println(err)
-    }
-    return jsonOutput, nil
+    return output, nil
   }
-  // TODO: Sort return value for unhappy path
-  // TODO: Figure out how to split everything up into sensible functions
-  return nil, nil
 }
 
 // Since Golang tries its hardest to design against optional parameters, electing to implement the main Transform function
 // to mirror the most common usage of the function - with addGeolocationData set to true (ie the default in the other SDKs).
-// TODO: Design decisions to be made around what other functions to implement/expose - or how to approach doing other things
-// One option: A method to transform only a specific set of atomic fields - which can be configured to transform all fields without doing the golocation bit...
-func Transform(event string) ([]byte, error) {
 
-  // I think I prefer to just strings.Split("/t") if we can get away with it. Removes an import, and removes the need to needlessly memory on this reader object too/
+// Elected to make a function to specifically transform to JSON, with a view to one to transform to Map also
+// This means that having addGeolocationData might lead to proliferation of functions...
+func TransformToJson(event string) ([]byte, error) {
+	mapified, err := TransformToMap(event)
+	if err != nil {
+		return nil, err
+	}
 
-  r := csv.NewReader(strings.NewReader(event))
+	jsonified, err := json.Marshal(mapified)
+	if err != nil {
+		return nil, errors.Wrap(err, "Error marshaling to JSON")
+	}
+  return jsonified, nil
+}
+
+func TransformToMap(event string) (map[string]interface{}, error) {
+
+	// I think I prefer to just strings.Split("/t") if safe and faster. Removes an import, and removes the need to needlessly memory on this reader object too.
+	r := csv.NewReader(strings.NewReader(event))
 	r.Comma = '\t'
 	r.LazyQuotes = true
 
 	record, err := r.Read()
 	if err != nil {
-		fmt.Println(err)
+		return nil, errors.Wrap(err, "Error parsing tsv string")
 	}
 
-  return jsonifyGoodEvent(record, enrichedEventFieldTypes, true) // Maybe json marshalling should be done here and the inner function should return a map - then we can have methods to return the map also.
+	return mapifyGoodEvent(record, enrichedEventFieldTypes, true)
 }
