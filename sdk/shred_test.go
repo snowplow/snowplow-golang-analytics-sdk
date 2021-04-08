@@ -33,6 +33,13 @@ func TestExtractSchema(t *testing.T) {
   assert.Zero(schemaParts2.Revision)
 }
 
+
+func BenchmarkExtractSchema(b *testing.B) {
+  for i := 0; i < b.N; i++ {
+    extractSchema("iglu:com.acme.data/some_event/jsonschema/15-34-1")
+  }
+}
+
 func TestInsertUnderscores(t *testing.T) {
   assert := assert.New(t)
 
@@ -43,6 +50,11 @@ func TestInsertUnderscores(t *testing.T) {
   assert.Equal("this__String_Is_A_Mixture", underscoredMixture) // should our function avoid double-underscore in this case???
 }
 
+func BenchmarkInsertUnderscores(b *testing.B) {
+  for i := 0; i < b.N; i++ {
+    insertUnderscores("ThisStringIsCamelCase")
+  }
+}
 
 func TestFixSchema(t *testing.T) {
   assert := assert.New(t)
@@ -54,6 +66,12 @@ func TestFixSchema(t *testing.T) {
   assert.Equal("unstruct_com_acme_data_some_event_15", fixedSchema)
   assert.NotNil(err2)
   assert.Zero(brokenSchema)
+}
+
+func BenchmarkFixSchema(b *testing.B) {
+  for i := 0; i < b.N; i++ {
+    fixSchema("unstruct", "iglu:com.acme.data/some_event/jsonschema/15-34-1")
+  }
 }
 
 func TestShredContexts(t *testing.T) {
@@ -77,9 +95,17 @@ func TestShredContexts(t *testing.T) {
 	assert.Nil(failedShred)
 }
 
+func BenchmarkShredContexts(b *testing.B) {
+	// move to global
+	ctxt := `{"schema":"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-1","data":[{"schema":"iglu:com.acme/test_context/jsonschema/1-0-0","data":{"field1": 1}}, {"schema":"iglu:com.acme/test_context/jsonschema/1-0-0","data":{"field1": 2}}]}`
+  for i := 0; i < b.N; i++ {
+    shredContexts(ctxt)
+  }
+}
+
 func TestShredUnstruct(t *testing.T) {
 	assert := assert.New(t)
-
+	// move to global
 	unstruct := `{"data":{"data":{"key":"value"},"schema":"iglu:com.snowplowanalytics.snowplow/link_click/jsonschema/1-0-1"},"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0"}`
 	unstruct2 := `{"data":{"data":{"key":"value"},"schema":"fail"},"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0"}`
 
@@ -94,4 +120,11 @@ func TestShredUnstruct(t *testing.T) {
 
 	assert.NotNil(err2)
 	assert.Nil(failedShred)
+}
+
+func BenchmarkShredUnstruct(b *testing.B) {
+	unstruct := `{"data":{"data":{"key":"value"},"schema":"iglu:com.snowplowanalytics.snowplow/link_click/jsonschema/1-0-1"},"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0"}`
+  for i := 0; i < b.N; i++ {
+    shredUnstruct(unstruct)
+  }
 }
