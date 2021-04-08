@@ -31,6 +31,12 @@ func TestParseNullableTime(t *testing.T) {
   assert.NotNil(err3)
 }
 
+func BenchmarkParseNullableTime(b *testing.B) {
+  for i := 0; i < b.N; i++ {
+    parseNullableTime("2021-04-07 12:01:01.999")
+  }
+}
+
 func TestParseTime(t *testing.T) {
   assert := assert.New(t)
 
@@ -50,6 +56,12 @@ func TestParseTime(t *testing.T) {
   assert.NotNil(err3)
 }
 
+func BenchmarkParseTime(b *testing.B) {
+  for i := 0; i < b.N; i++ {
+    parseTime("tstampKey", "2021-04-07 12:01:01.999")
+  }
+}
+
 func TestParseString(t *testing.T) {
   assert := assert.New(t)
 
@@ -61,6 +73,12 @@ func TestParseString(t *testing.T) {
 
   assert.NotNil(err2)
   assert.Nil(zeroValue)
+}
+
+func BenchmarkParseString(b *testing.B) {
+  for i := 0; i < b.N; i++ {
+    parseString("stringKey", "stringValue")
+  }
 }
 
 func TestParseInt(t *testing.T) {
@@ -80,6 +98,12 @@ func TestParseInt(t *testing.T) {
   assert.Nil(zeroValue)
 }
 
+func BenchmarkParseInt(b *testing.B) {
+  for i := 0; i < b.N; i++ {
+    parseInt("intKey", "123")
+  }
+}
+
 func TestParseBool(t *testing.T) {
   assert := assert.New(t)
 
@@ -97,6 +121,12 @@ func TestParseBool(t *testing.T) {
   assert.Nil(zeroValue)
 }
 
+func BenchmarkParseBool(b *testing.B) {
+  for i := 0; i < b.N; i++ {
+    parseBool("boolKey", "1")
+  }
+}
+
 func TestParseDouble(t *testing.T) {
   assert := assert.New(t)
 
@@ -112,6 +142,12 @@ func TestParseDouble(t *testing.T) {
 
   assert.NotNil(err3)
   assert.Nil(zeroValue)
+}
+
+func BenchmarkParseDouble(b *testing.B) {
+  for i := 0; i < b.N; i++ {
+    parseDouble("doubleKey", "1234.234567")
+  }
 }
 
 // tests for parseContexts and parseUnstruct don't feel necessary as the tests for the respective shred methods cover it.
@@ -359,7 +395,8 @@ var map2 = map[string]interface{}{
   "user_ipaddress":   "92.231.54.234",
   "v_collector":      "clj-tomcat-0.1.0",
   "v_etl":            "serde-0.5.2",
-  "v_tracker":        "js-2.1.0"}
+  "v_tracker":        "js-2.1.0",
+}
 
 
 func TestMapifyGoodEvent(t *testing.T) {
@@ -373,6 +410,11 @@ func TestMapifyGoodEvent(t *testing.T) {
   // TODO: Add test for failure path
 }
 
+func BenchmarkMapifyGoodEvent(b *testing.B) {
+  for i := 0; i < b.N; i++ {
+    mapifyGoodEvent(fullEvent, enrichedEventFieldTypes, true)
+  }
+}
 
 func TestTransformToJson(t *testing.T) {
   assert := assert.New(t)
@@ -387,4 +429,25 @@ func TestTransformToJson(t *testing.T) {
   assert.Equal(jsonEvent, jsonifiedEvent)
   // TODO: Add test for failure path
 
+}
+
+func BenchmarkTransformToJson(b *testing.B) {
+  for i := 0; i < b.N; i++ {
+    TransformToJson(tsvEvent)
+  }
+}
+
+func TestTransformToMap(t *testing.T) {
+  assert := assert.New(t)
+
+  mapifiedEvent, err := TransformToMap(tsvEvent)
+
+  assert.Nil(err)
+  assert.Equal(map2, mapifiedEvent)
+}
+
+func BenchmarkTransformToMap(b *testing.B) {
+  for i := 0; i < b.N; i++ {
+    TransformToMap(tsvEvent)
+  }
 }
