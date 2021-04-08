@@ -1,7 +1,7 @@
 package sdk
 
 import (
-	"encoding/json"
+	"encoding/json" // TODO: Look into faster options: https://github.com/json-iterator/go-benchmark https://github.com/buger/jsonparser
 	"fmt"
 	"strconv"
 	"time"

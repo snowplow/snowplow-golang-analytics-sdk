@@ -2,11 +2,11 @@ package sdk
 
 import (
 	"github.com/stretchr/testify/assert"
-	// "strings"
 	"testing"
-  // "fmt"
-	// "time"
 )
+
+// TODO: Add equality checks for specific error messages
+// TODO: Add benchmarking
 
 func TestExtractSchema(t *testing.T) {
   assert := assert.New(t)

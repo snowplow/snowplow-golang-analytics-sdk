@@ -1,23 +1,18 @@
 package sdk // Terrible name... TODO: Come up with a better name
 
 import (
-	//	"encoding/base64"
-	//	"encoding/csv"
 	"encoding/json"
-	// "errors" // TODO: Decide whether to use this or handle errors another way
 	"fmt"
 	"regexp"
 	"strings"
-	//	"time"
 	"unicode" // For camel to snake case - consider alternative?
-	// 	"github.com/hashicorp/go-multierror" // check out these packages for error handling
 	"github.com/pkg/errors"
 )
 
 // This should be SelfDescribingData...
 type SelfDescribingData struct {
-	Schema string                 `json:"schema"` // Probably don't need the json tags
-	Data   map[string]interface{} `json:"data"`
+	Schema string
+	Data   map[string]interface{}
 
 	// If we keep this as a string instead of a map, will it unmarshal into a string?
 	// If so, I'm guessing it's preferable to do so and then marshal it to json as we assign to keys...
@@ -30,8 +25,8 @@ type SelfDescribingData struct {
 }
 
 type Contexts struct {
-	Schema string               `json:"schema"`
-	Data   []SelfDescribingData `json:"data"`
+	Schema string
+	Data   []SelfDescribingData
 }
 
 type UnstructEvent struct {
@@ -58,7 +53,6 @@ func extractSchema(uri string) (SchemaParts, error) {
 
 	match := schema_pattern.FindStringSubmatch(uri)
 	if match != nil {
-		// fmt.Println(match)
 		return SchemaParts{
 			Protocol: match[1],
 			Vendor:   match[2],
@@ -83,7 +77,7 @@ func insertUnderscores(s string) string {
 		} else {
 			res = append(res, r)
 		}
-		// j := i  .... add j != _ to condition above?
+		// j := i  .... add j != _ to condition above to avoid double underscores
 	}
 	return string(res)
 }
@@ -142,7 +136,7 @@ func shredUnstruct(unstruct string) ([]KeyVals, error) {
 		return nil, errors.Wrap(err, "Error unmarshaling unstruct event JSON")
 	}
 
-	key, err := fixSchema("unstruct_event", event.Data.Schema) 
+	key, err := fixSchema("unstruct_event", event.Data.Schema)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error parsing unstruct event") // Too much nesting of error wrapping?
 	}
