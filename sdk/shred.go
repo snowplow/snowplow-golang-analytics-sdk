@@ -3,10 +3,10 @@ package sdk // Terrible name... TODO: Come up with a better name
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 	"regexp"
 	"strings"
 	"unicode" // For camel to snake case - consider alternative?
-	"github.com/pkg/errors"
 )
 
 // This should be SelfDescribingData...
@@ -45,6 +45,7 @@ type SchemaParts struct {
 
 // Should be const??
 var SCHEMA_URI_REGEX = `(?P<protocol>^iglu:)(?P<vendor>[a-zA-Z0-9-_.]+)/(?P<name>[a-zA-Z0-9-_]+)/(?P<format>[a-zA-Z0-9-_]+)/(?P<model>[1-9][0-9]*)(?P<revision>(?:-(?:0|[1-9][0-9]*)){2}$)`
+
 // Take regex capture group names out, as not used?
 // https://golang.org/pkg/regexp/#example_Regexp_SubexpNames
 

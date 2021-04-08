@@ -1,10 +1,10 @@
 package sdk
 
 import (
+	"encoding/json"
 	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
-  "encoding/json"
 	"time"
 )
 
@@ -13,141 +13,141 @@ import (
 // TODO: Move the variable declarations to make it sensibly readable
 
 func TestParseNullableTime(t *testing.T) {
-  assert := assert.New(t)
+	assert := assert.New(t)
 
-  tstamp, err := parseNullableTime("2021-04-07 12:01:01.999")
-  notTstamp, err2 := parseNullableTime("this is not a tstamp")
-  zeroValue, err3 := parseNullableTime("")
+	tstamp, err := parseNullableTime("2021-04-07 12:01:01.999")
+	notTstamp, err2 := parseNullableTime("this is not a tstamp")
+	zeroValue, err3 := parseNullableTime("")
 
-  assert.Nil(err)
-  assert.NotNil(tstamp)
-  assert.NotZero(tstamp)
-  // assert.Equal("2021-04-07 12:01:01.999", string(tstamp)) // How to do this without just rewriting the function?
+	assert.Nil(err)
+	assert.NotNil(tstamp)
+	assert.NotZero(tstamp)
+	// assert.Equal("2021-04-07 12:01:01.999", string(tstamp)) // How to do this without just rewriting the function?
 
-  assert.NotNil(err2)
-  assert.Nil(notTstamp)
+	assert.NotNil(err2)
+	assert.Nil(notTstamp)
 
-  assert.Nil(zeroValue)
-  assert.NotNil(err3)
+	assert.Nil(zeroValue)
+	assert.NotNil(err3)
 }
 
 func BenchmarkParseNullableTime(b *testing.B) {
-  for i := 0; i < b.N; i++ {
-    parseNullableTime("2021-04-07 12:01:01.999")
-  }
+	for i := 0; i < b.N; i++ {
+		parseNullableTime("2021-04-07 12:01:01.999")
+	}
 }
 
 func TestParseTime(t *testing.T) {
-  assert := assert.New(t)
+	assert := assert.New(t)
 
-  tstamp, err := parseTime("tstampKey", "2021-04-07 12:01:01.999")
-  notTstamp, err2 := parseTime("tstampKey", "not a tstamp")
-  zeroValue, err3 := parseTime("tstampKey", "")
+	tstamp, err := parseTime("tstampKey", "2021-04-07 12:01:01.999")
+	notTstamp, err2 := parseTime("tstampKey", "not a tstamp")
+	zeroValue, err3 := parseTime("tstampKey", "")
 
-  assert.Nil(err)
-  assert.NotNil(tstamp)
-  assert.NotZero(tstamp)
-  // TODO: Figure out how to write the positive equality check
+	assert.Nil(err)
+	assert.NotNil(tstamp)
+	assert.NotZero(tstamp)
+	// TODO: Figure out how to write the positive equality check
 
-  assert.NotNil(err2)
-  assert.Nil(notTstamp)
+	assert.NotNil(err2)
+	assert.Nil(notTstamp)
 
-  assert.Nil(zeroValue)
-  assert.NotNil(err3)
+	assert.Nil(zeroValue)
+	assert.NotNil(err3)
 }
 
 func BenchmarkParseTime(b *testing.B) {
-  for i := 0; i < b.N; i++ {
-    parseTime("tstampKey", "2021-04-07 12:01:01.999")
-  }
+	for i := 0; i < b.N; i++ {
+		parseTime("tstampKey", "2021-04-07 12:01:01.999")
+	}
 }
 
 func TestParseString(t *testing.T) {
-  assert := assert.New(t)
+	assert := assert.New(t)
 
-  parsedString, err := parseString("stringKey", "stringValue")
-  zeroValue, err2 := parseString("stringKey", "")
+	parsedString, err := parseString("stringKey", "stringValue")
+	zeroValue, err2 := parseString("stringKey", "")
 
-  assert.Nil(err)
-  assert.Equal([]KeyVals{KeyVals{"stringKey", "stringValue"}}, parsedString)
+	assert.Nil(err)
+	assert.Equal([]KeyVals{KeyVals{"stringKey", "stringValue"}}, parsedString)
 
-  assert.NotNil(err2)
-  assert.Nil(zeroValue)
+	assert.NotNil(err2)
+	assert.Nil(zeroValue)
 }
 
 func BenchmarkParseString(b *testing.B) {
-  for i := 0; i < b.N; i++ {
-    parseString("stringKey", "stringValue")
-  }
+	for i := 0; i < b.N; i++ {
+		parseString("stringKey", "stringValue")
+	}
 }
 
 func TestParseInt(t *testing.T) {
-  assert := assert.New(t)
+	assert := assert.New(t)
 
-  parsedInt, err := parseInt("intKey", "123")
-  notInt, err2 := parseInt("intKey", "notAnInt")
-  zeroValue, err3 := parseInt("intKey", "")
+	parsedInt, err := parseInt("intKey", "123")
+	notInt, err2 := parseInt("intKey", "notAnInt")
+	zeroValue, err3 := parseInt("intKey", "")
 
-  assert.Nil(err)
-  assert.Equal([]KeyVals{KeyVals{"intKey", 123}}, parsedInt)
+	assert.Nil(err)
+	assert.Equal([]KeyVals{KeyVals{"intKey", 123}}, parsedInt)
 
-  assert.Nil(notInt)
-  assert.NotNil(err2)
+	assert.Nil(notInt)
+	assert.NotNil(err2)
 
-  assert.NotNil(err3)
-  assert.Nil(zeroValue)
+	assert.NotNil(err3)
+	assert.Nil(zeroValue)
 }
 
 func BenchmarkParseInt(b *testing.B) {
-  for i := 0; i < b.N; i++ {
-    parseInt("intKey", "123")
-  }
+	for i := 0; i < b.N; i++ {
+		parseInt("intKey", "123")
+	}
 }
 
 func TestParseBool(t *testing.T) {
-  assert := assert.New(t)
+	assert := assert.New(t)
 
-  parsedBool, err := parseBool("boolKey", "1")
-  notBool, err2 := parseBool("boolKey", "notABool")
-  zeroValue, err3 := parseBool("boolKey", "")
+	parsedBool, err := parseBool("boolKey", "1")
+	notBool, err2 := parseBool("boolKey", "notABool")
+	zeroValue, err3 := parseBool("boolKey", "")
 
-  assert.Nil(err)
-  assert.Equal([]KeyVals{KeyVals{"boolKey", true}}, parsedBool)
+	assert.Nil(err)
+	assert.Equal([]KeyVals{KeyVals{"boolKey", true}}, parsedBool)
 
-  assert.Nil(notBool)
-  assert.NotNil(err2)
+	assert.Nil(notBool)
+	assert.NotNil(err2)
 
-  assert.NotNil(err3)
-  assert.Nil(zeroValue)
+	assert.NotNil(err3)
+	assert.Nil(zeroValue)
 }
 
 func BenchmarkParseBool(b *testing.B) {
-  for i := 0; i < b.N; i++ {
-    parseBool("boolKey", "1")
-  }
+	for i := 0; i < b.N; i++ {
+		parseBool("boolKey", "1")
+	}
 }
 
 func TestParseDouble(t *testing.T) {
-  assert := assert.New(t)
+	assert := assert.New(t)
 
-  parsedDouble, err := parseDouble("doubleKey", "1.23")
-  notDouble, err2 := parseDouble("doubleKey", "notADouble")
-  zeroValue, err3 := parseDouble("doubleKey", "")
+	parsedDouble, err := parseDouble("doubleKey", "1.23")
+	notDouble, err2 := parseDouble("doubleKey", "notADouble")
+	zeroValue, err3 := parseDouble("doubleKey", "")
 
-  assert.Nil(err)
-  assert.Equal([]KeyVals{KeyVals{"doubleKey", 1.23}}, parsedDouble)
+	assert.Nil(err)
+	assert.Equal([]KeyVals{KeyVals{"doubleKey", 1.23}}, parsedDouble)
 
-  assert.Nil(notDouble)
-  assert.NotNil(err2)
+	assert.Nil(notDouble)
+	assert.NotNil(err2)
 
-  assert.NotNil(err3)
-  assert.Nil(zeroValue)
+	assert.NotNil(err3)
+	assert.Nil(zeroValue)
 }
 
 func BenchmarkParseDouble(b *testing.B) {
-  for i := 0; i < b.N; i++ {
-    parseDouble("doubleKey", "1234.234567")
-  }
+	for i := 0; i < b.N; i++ {
+		parseDouble("doubleKey", "1234.234567")
+	}
 }
 
 // tests for parseContexts and parseUnstruct don't feel necessary as the tests for the respective shred methods cover it.
@@ -160,137 +160,137 @@ var derived_contexts_json = `{"schema":"iglu:com.snowplowanalytics.snowplow\/con
 
 // full event slice
 var fullEvent = []string{
-  "angry-birds",
-  "web",
-  "2013-11-26 00:03:57.885",
-  "2013-11-26 00:03:57.885",
-  "2013-11-26 00:03:57.885",
-  "page_view",
-  "c6ef3124-b53a-4b13-a233-0088f79dcbcb",
-  "41828",
-  "cloudfront-1",
-  "js-2.1.0",
-  "clj-tomcat-0.1.0",
-  "serde-0.5.2",
-  "jon.doe@email.com",
-  "92.231.54.234",
-  "2161814971",
-  "bc2e92ec6c204a14",
-  "3",
-  "ecdff4d0-9175-40ac-a8bb-325c49733607",
-  "US",
-  "TX",
-  "New York",
-  "94109",
-  "37.443604",
-  "-122.4124",
-  "Florida",
-  "FDN Communications",
-  "Bouygues Telecom",
-  "nuvox.net",
-  "Cable/DSL",
-  "http://www.snowplowanalytics.com",
-  "On Analytics",
-  "",
-  "http",
-  "www.snowplowanalytics.com",
-  "80",
-  "/product/index.html",
-  "id=GTM-DLRG",
-  "4-conclusion",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  contexts_json,
-  "",
-  "",
-  "",
-  "",
-  "",
-  unstruct_json,
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "1",
-  "0",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  derived_contexts_json,
-  "2b15e5c8-d3b1-11e4-b9d6-1681e6b88ec1",
-  "2013-11-26 00:03:57.885",
-  "com.snowplowanalytics.snowplow",
-  "link_click",
-  "jsonschema",
-  "1-0-0",
-  "e3dbfa9cca0412c3d4052863cefb547f",
-  "2013-11-26 00:03:57.885",
+	"angry-birds",
+	"web",
+	"2013-11-26 00:03:57.885",
+	"2013-11-26 00:03:57.885",
+	"2013-11-26 00:03:57.885",
+	"page_view",
+	"c6ef3124-b53a-4b13-a233-0088f79dcbcb",
+	"41828",
+	"cloudfront-1",
+	"js-2.1.0",
+	"clj-tomcat-0.1.0",
+	"serde-0.5.2",
+	"jon.doe@email.com",
+	"92.231.54.234",
+	"2161814971",
+	"bc2e92ec6c204a14",
+	"3",
+	"ecdff4d0-9175-40ac-a8bb-325c49733607",
+	"US",
+	"TX",
+	"New York",
+	"94109",
+	"37.443604",
+	"-122.4124",
+	"Florida",
+	"FDN Communications",
+	"Bouygues Telecom",
+	"nuvox.net",
+	"Cable/DSL",
+	"http://www.snowplowanalytics.com",
+	"On Analytics",
+	"",
+	"http",
+	"www.snowplowanalytics.com",
+	"80",
+	"/product/index.html",
+	"id=GTM-DLRG",
+	"4-conclusion",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	contexts_json,
+	"",
+	"",
+	"",
+	"",
+	"",
+	unstruct_json,
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"1",
+	"0",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	derived_contexts_json,
+	"2b15e5c8-d3b1-11e4-b9d6-1681e6b88ec1",
+	"2013-11-26 00:03:57.885",
+	"com.snowplowanalytics.snowplow",
+	"link_click",
+	"jsonschema",
+	"1-0-0",
+	"e3dbfa9cca0412c3d4052863cefb547f",
+	"2013-11-26 00:03:57.885",
 }
 
 // tsv string
@@ -299,155 +299,154 @@ var tsvEvent = strings.Join(fullEvent, "\t")
 var tstampValue, _ = time.Parse("2006-01-02 15:04:05.999", "2013-11-26 00:03:57.885")
 
 var map2 = map[string]interface{}{
-  "app_id":            "angry-birds",
-  "br_features_flash": false,
-  "br_features_pdf":   true,
-  "collector_tstamp":  &tstampValue,
-  "contexts_com_snowplowanalytics_snowplow_ua_parser_context_1": []interface{}{map[string]interface{}{
-    "deviceFamily":     "Other",
-    "osFamily":         "Windows XP",
-    "osMajor":          interface{}(nil),
-    "osMinor":          interface{}(nil),
-    "osPatch":          interface{}(nil),
-    "osPatchMinor":     interface{}(nil),
-    "osVersion":        "Windows XP",
-    "useragentFamily":  "IE",
-    "useragentMajor":   "7",
-    "useragentMinor":   "0",
-    "useragentPatch":   interface{}(nil),
-    "useragentVersion": "IE 7.0",
-  }},
-  "contexts_org_schema_web_page_1": []interface{}{map[string]interface{}{
-    "author":        "Fred Blundun",
-    "breadcrumb":    []interface{}{"blog", "releases"},
-    "datePublished": "2014-11-06T00:00:00Z",
-    "genre":         "blog",
-    "inLanguage":    "en-US",
-    "keywords":      []interface{}{"snowplow", "javascript", "tracker", "event"},
-  }},
-  "contexts_org_w3_performance_timing_1": []interface{}{map[string]interface{}{
-    "connectEnd":                 1.415358090183e+12,
-    "connectStart":               1.415358090103e+12,
-    "domComplete":                0.0,
-    "domContentLoadedEventEnd":   1.415358091309e+12,
-    "domContentLoadedEventStart": 1.415358090968e+12,
-    "domInteractive":             1.415358090886e+12,
-    "domLoading":                 1.41535809027e+12,
-    "domainLookupEnd":            1.415358090102e+12,
-    "domainLookupStart":          1.415358090102e+12,
-    "fetchStart":                 1.41535808987e+12,
-    "loadEventEnd":               0.0,
-    "loadEventStart":             0.0,
-    "navigationStart":            1.415358089861e+12,
-    "redirectEnd":                0.0,
-    "redirectStart":              0.0,
-    "requestStart":               1.415358090183e+12,
-    "responseEnd":                1.415358090265e+12,
-    "responseStart":              1.415358090265e+12,
-    "unloadEventEnd":             1.415358090287e+12,
-    "unloadEventStart":           1.41535809027e+12,
-  }},
-  "derived_tstamp":      &tstampValue,
-  "domain_sessionid":    "2b15e5c8-d3b1-11e4-b9d6-1681e6b88ec1",
-  "domain_sessionidx":   3,
-  "domain_userid":       "bc2e92ec6c204a14",
-  "dvce_created_tstamp": &tstampValue,
-  "etl_tstamp":          &tstampValue,
-  "event":               "page_view",
-  "event_fingerprint":   "e3dbfa9cca0412c3d4052863cefb547f",
-  "event_format":        "jsonschema",
-  "event_id":            "c6ef3124-b53a-4b13-a233-0088f79dcbcb",
-  "event_name":          "link_click",
-  "event_vendor":        "com.snowplowanalytics.snowplow",
-  "event_version":       "1-0-0",
-  "geo_city":            "New York",
-  "geo_country":         "US",
-  "geo_latitude":        37.443604,
-  "geo_location":        "37.443604,-122.4124",
-  "geo_longitude":       -122.4124,
-  "geo_region":          "TX",
-  "geo_region_name":     "Florida",
-  "geo_zipcode":         "94109",
-  "ip_domain":           "nuvox.net",
-  "ip_isp":              "FDN Communications",
-  "ip_netspeed":         "Cable/DSL",
-  "ip_organization":     "Bouygues Telecom",
-  "name_tracker":        "cloudfront-1",
-  "network_userid":      "ecdff4d0-9175-40ac-a8bb-325c49733607",
-  "page_title":          "On Analytics",
-  "page_url":            "http://www.snowplowanalytics.com",
-  "page_urlfragment":    "4-conclusion",
-  "page_urlhost":        "www.snowplowanalytics.com",
-  "page_urlpath":        "/product/index.html",
-  "page_urlport":        80,
-  "page_urlquery":       "id=GTM-DLRG",
-  "page_urlscheme":      "http",
-  "platform":            "web",
-  "true_tstamp":         &tstampValue,
-  "txn_id":              41828,
-  "unstruct_event_com_snowplowanalytics_snowplow_link_click_1": map[string]interface{}{
-    "elementClasses": []interface{}{"foreground"},
-    "elementId":      "exampleLink",
-    "targetUrl":      "http://www.example.com",
-  },
-  "user_fingerprint": "2161814971",
-  "user_id":          "jon.doe@email.com",
-  "user_ipaddress":   "92.231.54.234",
-  "v_collector":      "clj-tomcat-0.1.0",
-  "v_etl":            "serde-0.5.2",
-  "v_tracker":        "js-2.1.0",
+	"app_id":            "angry-birds",
+	"br_features_flash": false,
+	"br_features_pdf":   true,
+	"collector_tstamp":  &tstampValue,
+	"contexts_com_snowplowanalytics_snowplow_ua_parser_context_1": []interface{}{map[string]interface{}{
+		"deviceFamily":     "Other",
+		"osFamily":         "Windows XP",
+		"osMajor":          interface{}(nil),
+		"osMinor":          interface{}(nil),
+		"osPatch":          interface{}(nil),
+		"osPatchMinor":     interface{}(nil),
+		"osVersion":        "Windows XP",
+		"useragentFamily":  "IE",
+		"useragentMajor":   "7",
+		"useragentMinor":   "0",
+		"useragentPatch":   interface{}(nil),
+		"useragentVersion": "IE 7.0",
+	}},
+	"contexts_org_schema_web_page_1": []interface{}{map[string]interface{}{
+		"author":        "Fred Blundun",
+		"breadcrumb":    []interface{}{"blog", "releases"},
+		"datePublished": "2014-11-06T00:00:00Z",
+		"genre":         "blog",
+		"inLanguage":    "en-US",
+		"keywords":      []interface{}{"snowplow", "javascript", "tracker", "event"},
+	}},
+	"contexts_org_w3_performance_timing_1": []interface{}{map[string]interface{}{
+		"connectEnd":                 1.415358090183e+12,
+		"connectStart":               1.415358090103e+12,
+		"domComplete":                0.0,
+		"domContentLoadedEventEnd":   1.415358091309e+12,
+		"domContentLoadedEventStart": 1.415358090968e+12,
+		"domInteractive":             1.415358090886e+12,
+		"domLoading":                 1.41535809027e+12,
+		"domainLookupEnd":            1.415358090102e+12,
+		"domainLookupStart":          1.415358090102e+12,
+		"fetchStart":                 1.41535808987e+12,
+		"loadEventEnd":               0.0,
+		"loadEventStart":             0.0,
+		"navigationStart":            1.415358089861e+12,
+		"redirectEnd":                0.0,
+		"redirectStart":              0.0,
+		"requestStart":               1.415358090183e+12,
+		"responseEnd":                1.415358090265e+12,
+		"responseStart":              1.415358090265e+12,
+		"unloadEventEnd":             1.415358090287e+12,
+		"unloadEventStart":           1.41535809027e+12,
+	}},
+	"derived_tstamp":      &tstampValue,
+	"domain_sessionid":    "2b15e5c8-d3b1-11e4-b9d6-1681e6b88ec1",
+	"domain_sessionidx":   3,
+	"domain_userid":       "bc2e92ec6c204a14",
+	"dvce_created_tstamp": &tstampValue,
+	"etl_tstamp":          &tstampValue,
+	"event":               "page_view",
+	"event_fingerprint":   "e3dbfa9cca0412c3d4052863cefb547f",
+	"event_format":        "jsonschema",
+	"event_id":            "c6ef3124-b53a-4b13-a233-0088f79dcbcb",
+	"event_name":          "link_click",
+	"event_vendor":        "com.snowplowanalytics.snowplow",
+	"event_version":       "1-0-0",
+	"geo_city":            "New York",
+	"geo_country":         "US",
+	"geo_latitude":        37.443604,
+	"geo_location":        "37.443604,-122.4124",
+	"geo_longitude":       -122.4124,
+	"geo_region":          "TX",
+	"geo_region_name":     "Florida",
+	"geo_zipcode":         "94109",
+	"ip_domain":           "nuvox.net",
+	"ip_isp":              "FDN Communications",
+	"ip_netspeed":         "Cable/DSL",
+	"ip_organization":     "Bouygues Telecom",
+	"name_tracker":        "cloudfront-1",
+	"network_userid":      "ecdff4d0-9175-40ac-a8bb-325c49733607",
+	"page_title":          "On Analytics",
+	"page_url":            "http://www.snowplowanalytics.com",
+	"page_urlfragment":    "4-conclusion",
+	"page_urlhost":        "www.snowplowanalytics.com",
+	"page_urlpath":        "/product/index.html",
+	"page_urlport":        80,
+	"page_urlquery":       "id=GTM-DLRG",
+	"page_urlscheme":      "http",
+	"platform":            "web",
+	"true_tstamp":         &tstampValue,
+	"txn_id":              41828,
+	"unstruct_event_com_snowplowanalytics_snowplow_link_click_1": map[string]interface{}{
+		"elementClasses": []interface{}{"foreground"},
+		"elementId":      "exampleLink",
+		"targetUrl":      "http://www.example.com",
+	},
+	"user_fingerprint": "2161814971",
+	"user_id":          "jon.doe@email.com",
+	"user_ipaddress":   "92.231.54.234",
+	"v_collector":      "clj-tomcat-0.1.0",
+	"v_etl":            "serde-0.5.2",
+	"v_tracker":        "js-2.1.0",
 }
 
-
 func TestMapifyGoodEvent(t *testing.T) {
-  assert := assert.New(t)
+	assert := assert.New(t)
 
-  mapifiedEvent, err := mapifyGoodEvent(fullEvent, enrichedEventFieldTypes, true)
+	mapifiedEvent, err := mapifyGoodEvent(fullEvent, enrichedEventFieldTypes, true)
 
-  assert.Nil(err)
-  assert.Equal(map2, mapifiedEvent)
+	assert.Nil(err)
+	assert.Equal(map2, mapifiedEvent)
 
-  // TODO: Add test for failure path
+	// TODO: Add test for failure path
 }
 
 func BenchmarkMapifyGoodEvent(b *testing.B) {
-  for i := 0; i < b.N; i++ {
-    mapifyGoodEvent(fullEvent, enrichedEventFieldTypes, true)
-  }
+	for i := 0; i < b.N; i++ {
+		mapifyGoodEvent(fullEvent, enrichedEventFieldTypes, true)
+	}
 }
 
 func TestTransformToJson(t *testing.T) {
-  assert := assert.New(t)
+	assert := assert.New(t)
 
-  jsonEvent, err := json.Marshal(map2)
-  if err != nil {
-  }
+	jsonEvent, err := json.Marshal(map2)
+	if err != nil {
+	}
 
-  jsonifiedEvent, err := TransformToJson(tsvEvent)
+	jsonifiedEvent, err := TransformToJson(tsvEvent)
 
-  assert.Nil(err)
-  assert.Equal(jsonEvent, jsonifiedEvent)
-  // TODO: Add test for failure path
+	assert.Nil(err)
+	assert.Equal(jsonEvent, jsonifiedEvent)
+	// TODO: Add test for failure path
 
 }
 
 func BenchmarkTransformToJson(b *testing.B) {
-  for i := 0; i < b.N; i++ {
-    TransformToJson(tsvEvent)
-  }
+	for i := 0; i < b.N; i++ {
+		TransformToJson(tsvEvent)
+	}
 }
 
 func TestTransformToMap(t *testing.T) {
-  assert := assert.New(t)
+	assert := assert.New(t)
 
-  mapifiedEvent, err := TransformToMap(tsvEvent)
+	mapifiedEvent, err := TransformToMap(tsvEvent)
 
-  assert.Nil(err)
-  assert.Equal(map2, mapifiedEvent)
+	assert.Nil(err)
+	assert.Equal(map2, mapifiedEvent)
 }
 
 func BenchmarkTransformToMap(b *testing.B) {
-  for i := 0; i < b.N; i++ {
-    TransformToMap(tsvEvent)
-  }
+	for i := 0; i < b.N; i++ {
+		TransformToMap(tsvEvent)
+	}
 }

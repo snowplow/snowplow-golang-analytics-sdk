@@ -1,18 +1,16 @@
 package sdk
 
 import (
+	"encoding/csv"
 	"encoding/json" // TODO: Look into faster options: https://github.com/json-iterator/go-benchmark https://github.com/buger/jsonparser
 	"fmt"
-	"strconv"
-	"time"
-  "encoding/csv"
-  "strings"
 	"github.com/pkg/errors"
+	"strconv"
+	"strings"
+	"time"
 	// "github.com/pkg/errors"
-
-
 	//	"unicode" // For camel to snake case - consider alternative?
-  //	"errors" // TODO: Decide what to do for error handling
+	//	"errors" // TODO: Decide what to do for error handling
 	// 	"github.com/hashicorp/go-multierror"
 	//	"github.com/pkg/errors"
 )
@@ -231,34 +229,33 @@ var enrichedEventFieldTypes = [131]KeyFunctionPair{KeyFunctionPair{"app_id", par
 var latitudeIndex = 22
 var longitudeIndex = 23
 
-
 // event is slice because csv package outputs a slice.
 // TODO: figure out if we can make event a fixed-length array.
-	// Not using the csv package to parse might be a good way - but let's decide that based on what's fastest and most reliable.
+// Not using the csv package to parse might be a good way - but let's decide that based on what's fastest and most reliable.
 func mapifyGoodEvent(event []string, knownFields [131]KeyFunctionPair, addGeolocationData bool) (map[string]interface{}, error) {
 	if len(event) != len(knownFields) {
-    return nil, errors.New("Cannot transform event - wrong number of fields")
-  } else {
-    output := make(map[string]interface{})
-    if addGeolocationData && event[latitudeIndex] != "" && event[longitudeIndex] != "" {
-      output["geo_location"] = event[latitudeIndex] + "," + event[longitudeIndex]
-    }
-    for index, value := range event {
-      // skip if empty
-      if event[index] != "" {
-        // apply function if not empty
-        kVPair, err := knownFields[index].Func(knownFields[index].Key, value)
+		return nil, errors.New("Cannot transform event - wrong number of fields")
+	} else {
+		output := make(map[string]interface{})
+		if addGeolocationData && event[latitudeIndex] != "" && event[longitudeIndex] != "" {
+			output["geo_location"] = event[latitudeIndex] + "," + event[longitudeIndex]
+		}
+		for index, value := range event {
+			// skip if empty
+			if event[index] != "" {
+				// apply function if not empty
+				kVPair, err := knownFields[index].Func(knownFields[index].Key, value)
 				if err != nil {
 					return nil, err
 				}
-        // append all results
-        for _, pair := range kVPair {
-          output[pair.Key] = pair.Value
-        }
-      }
-    }
-    return output, nil
-  }
+				// append all results
+				for _, pair := range kVPair {
+					output[pair.Key] = pair.Value
+				}
+			}
+		}
+		return output, nil
+	}
 }
 
 // Since Golang tries its hardest to design against optional parameters, electing to implement the main Transform function
@@ -276,7 +273,7 @@ func TransformToJson(event string) ([]byte, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "Error marshaling to JSON")
 	}
-  return jsonified, nil
+	return jsonified, nil
 }
 
 func TransformToMap(event string) (map[string]interface{}, error) {
