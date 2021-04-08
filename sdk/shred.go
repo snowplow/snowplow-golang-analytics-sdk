@@ -100,8 +100,6 @@ func fixSchema(prefix string, schemaUri string) (string, error) {
 }
 
 func shredContexts(contexts string) ([]KeyVals, error) {
-	// fmt.Println("CONTEXTS:::::::::::::::::::::::::::::")
-	// fmt.Println(contexts)
 
 	ctxts := Contexts{}
 
@@ -144,7 +142,7 @@ func shredUnstruct(unstruct string) ([]KeyVals, error) {
 		return nil, errors.Wrap(err, "Error unmarshaling unstruct event JSON")
 	}
 
-	key, err := fixSchema("unstruct", event.Data.Schema) // TODO: HAndle error
+	key, err := fixSchema("unstruct_event", event.Data.Schema) 
 	if err != nil {
 		return nil, errors.Wrap(err, "Error parsing unstruct event") // Too much nesting of error wrapping?
 	}

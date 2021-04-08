@@ -84,7 +84,7 @@ func TestShredUnstruct(t *testing.T) {
 	unstruct2 := `{"data":{"data":{"key":"value"},"schema":"fail"},"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0"}`
 
 	map1 := map[string]interface{}{"key": "value"}
-	expected := []KeyVals{KeyVals{"unstruct_com_snowplowanalytics_snowplow_link_click_1", map1}}
+	expected := []KeyVals{KeyVals{"unstruct_event_com_snowplowanalytics_snowplow_link_click_1", map1}}
 
 	shreddedUnstruct, err := shredUnstruct(unstruct)
 	failedShred, err2 := shredUnstruct(unstruct2)
