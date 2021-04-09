@@ -17,7 +17,7 @@ type KeyVal struct {
 type ValueParser func(string, string) ([]KeyVal, error)
 
 type KeyFunctionPair struct {
-	Key  string
+	Key           string
 	ParseFunction ValueParser
 }
 
@@ -249,7 +249,6 @@ to mirror the most common usage of the function - with addGeolocationData set to
 
 Elected to make a function to specifically transform to JSON, with a view to one to transform to Map also
 This means that having addGeolocationData might lead to proliferation of functions... */
-
 
 // TransformToJson transforms a valid tsv string Snowplow event to a JSON object.
 // It also adds the geo_location field.

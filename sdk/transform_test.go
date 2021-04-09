@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"github.com/stretchr/testify/assert"
 	"testing"
-
 )
 
 func TestParseNullableTime(t *testing.T) {
@@ -31,7 +30,6 @@ func BenchmarkParseNullableTime(b *testing.B) {
 		parseNullableTime("2021-04-07 12:01:01.999")
 	}
 }
-
 
 func TestParseTime(t *testing.T) {
 	assert := assert.New(t)
