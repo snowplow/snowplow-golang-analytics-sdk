@@ -85,7 +85,7 @@ func fixSchema(prefix string, schemaUri string) (string, error) {
 	return strings.ToLower(strings.Join([]string{prefix, vendor, name, parts.Model}, "_")), nil
 }
 
-func shredContexts(contexts string) ([]KeyVals, error) {
+func shredContexts(contexts string) ([]KeyVal, error) {
 
 	ctxts := Contexts{}
 
@@ -111,15 +111,15 @@ func shredContexts(contexts string) ([]KeyVals, error) {
 		}
 	}
 
-	out := make([]KeyVals, 0, len(distinctContexts))
+	out := make([]KeyVal, 0, len(distinctContexts))
 	outPointer := &out
 	for key, val := range distinctContexts {
-		*outPointer = append(*outPointer, KeyVals{key, val})
+		*outPointer = append(*outPointer, KeyVal{key, val})
 	}
 	return out, nil
 }
 
-func shredUnstruct(unstruct string) ([]KeyVals, error) {
+func shredUnstruct(unstruct string) ([]KeyVal, error) {
 
 	event := UnstructEvent{}
 
@@ -133,5 +133,5 @@ func shredUnstruct(unstruct string) ([]KeyVals, error) {
 		return nil, errors.Wrap(err, "Error parsing unstruct event") // Too much nesting of error wrapping?
 	}
 
-	return []KeyVals{KeyVals{key, event.Data.Data}}, nil
+	return []KeyVal{KeyVal{key, event.Data.Data}}, nil
 }

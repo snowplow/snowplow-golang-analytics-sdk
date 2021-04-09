@@ -9,13 +9,13 @@ import (
 	"time"
 )
 
-// Should be named KeyVal not KeyVals
-type KeyVals struct {
+// Should be named KeyVal not KeyVal
+type KeyVal struct {
 	Key   string
 	Value interface{}
 }
 
-type ValueParser func(string, string) ([]KeyVals, error)
+type ValueParser func(string, string) ([]KeyVal, error)
 
 type KeyFunctionPair struct {
 	Key  string
@@ -30,57 +30,57 @@ func parseNullableTime(timeString string) (*time.Time, error) { // Probably no n
 	if err != nil {
 		return nil, errors.Wrap(err, fmt.Sprintf("Error parsing timestamp value '%s'", timeString))
 	}
-	if time.Time.IsZero(res) { 
+	if time.Time.IsZero(res) {
 		return nil, errors.New(fmt.Sprintf("Timestamp string '%s' resulted in zero-value timestamp", timeString))
 	} else {
 		return &res, nil
 	}
 }
 
-func parseTime(key string, value string) ([]KeyVals, error) {
+func parseTime(key string, value string) ([]KeyVal, error) {
 	out, err := parseNullableTime(value)
 	if err != nil {
 		return nil, errors.Wrap(err, key)
 	}
-	return []KeyVals{KeyVals{key, out}}, err
+	return []KeyVal{KeyVal{key, out}}, err
 }
 
-func parseString(key string, value string) ([]KeyVals, error) { // throw an error if it's a zero string?
+func parseString(key string, value string) ([]KeyVal, error) { // throw an error if it's a zero string?
 	if value == "" {
 		return nil, errors.Wrap(errors.New("Zero value found for string"), key)
 	}
-	return []KeyVals{KeyVals{key, value}}, nil
+	return []KeyVal{KeyVal{key, value}}, nil
 }
 
-func parseInt(key string, value string) ([]KeyVals, error) {
+func parseInt(key string, value string) ([]KeyVal, error) {
 	intValue, err := strconv.Atoi(value)
 	if err != nil {
 		return nil, errors.Wrap(err, key) // maybe an error message as well as the key? "Cannot parse field '%s'"? - in fact maybe there should be a specific error class for it?
 	}
-	return []KeyVals{KeyVals{key, intValue}}, err
+	return []KeyVal{KeyVal{key, intValue}}, err
 }
 
-func parseBool(key string, value string) ([]KeyVals, error) {
+func parseBool(key string, value string) ([]KeyVal, error) {
 	boolValue, err := strconv.ParseBool(value)
 	if err != nil {
 		return nil, errors.Wrap(err, key)
 	}
-	return []KeyVals{KeyVals{key, boolValue}}, err
+	return []KeyVal{KeyVal{key, boolValue}}, err
 }
 
-func parseDouble(key string, value string) ([]KeyVals, error) {
+func parseDouble(key string, value string) ([]KeyVal, error) {
 	doubleValue, err := strconv.ParseFloat(value, 64)
 	if err != nil {
 		return nil, errors.Wrap(err, key)
 	}
-	return []KeyVals{KeyVals{key, doubleValue}}, err
+	return []KeyVal{KeyVal{key, doubleValue}}, err
 }
 
-func parseContexts(key string, value string) ([]KeyVals, error) {
+func parseContexts(key string, value string) ([]KeyVal, error) {
 	return shredContexts(value)
 }
 
-func parseUnstruct(key string, value string) ([]KeyVals, error) {
+func parseUnstruct(key string, value string) ([]KeyVal, error) {
 	return shredUnstruct(value)
 }
 

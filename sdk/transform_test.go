@@ -43,7 +43,7 @@ func TestParseTime(t *testing.T) {
 	assert.Nil(err)
 	assert.NotNil(tstamp)
 	assert.NotZero(tstamp)
-	assert.Equal([]KeyVals{KeyVals{"tstampKey", &tstampValue}}, tstamp)
+	assert.Equal([]KeyVal{KeyVal{"tstampKey", &tstampValue}}, tstamp)
 
 	assert.NotNil(err2)
 	assert.Nil(notTstamp)
@@ -65,7 +65,7 @@ func TestParseString(t *testing.T) {
 	zeroValue, err2 := parseString("stringKey", "")
 
 	assert.Nil(err)
-	assert.Equal([]KeyVals{KeyVals{"stringKey", "stringValue"}}, parsedString)
+	assert.Equal([]KeyVal{KeyVal{"stringKey", "stringValue"}}, parsedString)
 
 	assert.NotNil(err2)
 	assert.Nil(zeroValue)
@@ -85,7 +85,7 @@ func TestParseInt(t *testing.T) {
 	zeroValue, err3 := parseInt("intKey", "")
 
 	assert.Nil(err)
-	assert.Equal([]KeyVals{KeyVals{"intKey", 123}}, parsedInt)
+	assert.Equal([]KeyVal{KeyVal{"intKey", 123}}, parsedInt)
 
 	assert.Nil(notInt)
 	assert.NotNil(err2)
@@ -108,7 +108,7 @@ func TestParseBool(t *testing.T) {
 	zeroValue, err3 := parseBool("boolKey", "")
 
 	assert.Nil(err)
-	assert.Equal([]KeyVals{KeyVals{"boolKey", true}}, parsedBool)
+	assert.Equal([]KeyVal{KeyVal{"boolKey", true}}, parsedBool)
 
 	assert.Nil(notBool)
 	assert.NotNil(err2)
@@ -131,7 +131,7 @@ func TestParseDouble(t *testing.T) {
 	zeroValue, err3 := parseDouble("doubleKey", "")
 
 	assert.Nil(err)
-	assert.Equal([]KeyVals{KeyVals{"doubleKey", 1.23}}, parsedDouble)
+	assert.Equal([]KeyVal{KeyVal{"doubleKey", 1.23}}, parsedDouble)
 
 	assert.Nil(notDouble)
 	assert.NotNil(err2)
