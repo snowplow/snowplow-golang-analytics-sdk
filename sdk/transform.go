@@ -21,66 +21,6 @@ type KeyFunctionPair struct {
 	Func ValueParser
 }
 
-func parseNullableTime(timeString string) (*time.Time, error) { // Probably no need for a pointer here since we're manually parsing the whole thing
-	timeLayout := "2006-01-02 15:04:05.999"
-	res, err := time.Parse(timeLayout, timeString)
-	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("Error parsing timestamp value '%s'", timeString))
-	}
-	if time.Time.IsZero(res) {
-		return nil, errors.New(fmt.Sprintf("Timestamp string '%s' resulted in zero-value timestamp", timeString))
-	} else {
-		return &res, nil
-	}
-}
-
-func parseTime(key string, value string) ([]KeyVal, error) {
-	out, err := parseNullableTime(value)
-	if err != nil {
-		return nil, errors.Wrap(err, key)
-	}
-	return []KeyVal{KeyVal{key, out}}, err
-}
-
-func parseString(key string, value string) ([]KeyVal, error) { // throw an error if it's a zero string?
-	if value == "" {
-		return nil, errors.Wrap(errors.New("Zero value found for string"), key)
-	}
-	return []KeyVal{KeyVal{key, value}}, nil
-}
-
-func parseInt(key string, value string) ([]KeyVal, error) {
-	intValue, err := strconv.Atoi(value)
-	if err != nil {
-		return nil, errors.Wrap(err, key) // maybe an error message as well as the key? "Cannot parse field '%s'"? - in fact maybe there should be a specific error class for it?
-	}
-	return []KeyVal{KeyVal{key, intValue}}, err
-}
-
-func parseBool(key string, value string) ([]KeyVal, error) {
-	boolValue, err := strconv.ParseBool(value)
-	if err != nil {
-		return nil, errors.Wrap(err, key)
-	}
-	return []KeyVal{KeyVal{key, boolValue}}, err
-}
-
-func parseDouble(key string, value string) ([]KeyVal, error) {
-	doubleValue, err := strconv.ParseFloat(value, 64)
-	if err != nil {
-		return nil, errors.Wrap(err, key)
-	}
-	return []KeyVal{KeyVal{key, doubleValue}}, err
-}
-
-func parseContexts(key string, value string) ([]KeyVal, error) {
-	return shredContexts(value)
-}
-
-func parseUnstruct(key string, value string) ([]KeyVal, error) {
-	return shredUnstruct(value)
-}
-
 var enrichedEventFieldTypes = [131]KeyFunctionPair{KeyFunctionPair{"app_id", parseString},
 	KeyFunctionPair{"platform", parseString},
 	KeyFunctionPair{"etl_tstamp", parseTime},
@@ -216,9 +156,69 @@ var enrichedEventFieldTypes = [131]KeyFunctionPair{KeyFunctionPair{"app_id", par
 var latitudeIndex = 22
 var longitudeIndex = 23
 
+func parseNullableTime(timeString string) (*time.Time, error) { // Probably no need for a pointer here since we're manually parsing the whole thing
+	timeLayout := "2006-01-02 15:04:05.999"
+	res, err := time.Parse(timeLayout, timeString)
+	if err != nil {
+		return nil, errors.Wrap(err, fmt.Sprintf("Error parsing timestamp value '%s'", timeString))
+	}
+	if time.Time.IsZero(res) {
+		return nil, errors.New(fmt.Sprintf("Timestamp string '%s' resulted in zero-value timestamp", timeString))
+	} else {
+		return &res, nil
+	}
+}
+
+func parseTime(key string, value string) ([]KeyVal, error) {
+	out, err := parseNullableTime(value)
+	if err != nil {
+		return nil, errors.Wrap(err, key)
+	}
+	return []KeyVal{KeyVal{key, out}}, err
+}
+
+func parseString(key string, value string) ([]KeyVal, error) { // throw an error if it's a zero string?
+	if value == "" {
+		return nil, errors.Wrap(errors.New("Zero value found for string"), key)
+	}
+	return []KeyVal{KeyVal{key, value}}, nil
+}
+
+func parseInt(key string, value string) ([]KeyVal, error) {
+	intValue, err := strconv.Atoi(value)
+	if err != nil {
+		return nil, errors.Wrap(err, key) // maybe an error message as well as the key? "Cannot parse field '%s'"? - in fact maybe there should be a specific error class for it?
+	}
+	return []KeyVal{KeyVal{key, intValue}}, err
+}
+
+func parseBool(key string, value string) ([]KeyVal, error) {
+	boolValue, err := strconv.ParseBool(value)
+	if err != nil {
+		return nil, errors.Wrap(err, key)
+	}
+	return []KeyVal{KeyVal{key, boolValue}}, err
+}
+
+func parseDouble(key string, value string) ([]KeyVal, error) {
+	doubleValue, err := strconv.ParseFloat(value, 64)
+	if err != nil {
+		return nil, errors.Wrap(err, key)
+	}
+	return []KeyVal{KeyVal{key, doubleValue}}, err
+}
+
+func parseContexts(key string, value string) ([]KeyVal, error) {
+	return shredContexts(value)
+}
+
+func parseUnstruct(key string, value string) ([]KeyVal, error) {
+	return shredUnstruct(value)
+}
+
 // event is slice because csv package outputs a slice.
-// TODO: figure out if we can make event a fixed-length array.
-// Not using the csv package to parse might be a good way - but let's decide that based on what's fastest and most reliable.
+
+
 func mapifyGoodEvent(event []string, knownFields [131]KeyFunctionPair, addGeolocationData bool) (map[string]interface{}, error) {
 	if len(event) != len(knownFields) {
 		return nil, errors.New("Cannot transform event - wrong number of fields")
