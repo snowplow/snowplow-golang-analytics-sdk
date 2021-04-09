@@ -9,7 +9,6 @@ import (
 	"time"
 )
 
-// Should be named KeyVal not KeyVal
 type KeyVal struct {
 	Key   string
 	Value interface{}
@@ -22,8 +21,6 @@ type KeyFunctionPair struct {
 	Func ValueParser
 }
 
-// Is parse the correct nomenclature?
-// rename to parseTstamp?
 func parseNullableTime(timeString string) (*time.Time, error) { // Probably no need for a pointer here since we're manually parsing the whole thing
 	timeLayout := "2006-01-02 15:04:05.999"
 	res, err := time.Parse(timeLayout, timeString)
