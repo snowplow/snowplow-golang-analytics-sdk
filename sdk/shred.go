@@ -12,16 +12,7 @@ import (
 // This should be SelfDescribingData...
 type SelfDescribingData struct {
 	Schema string
-	Data   map[string]interface{}
-
-	// If we keep this as a string instead of a map, will it unmarshal into a string?
-	// If so, I'm guessing it's preferable to do so and then marshal it to json as we assign to keys...
-	// Data string `json:"data"`
-	// OK so - error: json: cannot unmarshal object into Go struct field SelfDescribingData.data.data of type string
-	// using map[string]string does work but still results in a map...
-	// maybe leave it as []byte???
-	// Data []byte - doesn't work.
-
+	Data   map[string]interface{} // TODO: See if leaving data as a string would work, and would be faster.
 }
 
 type Contexts struct {
@@ -69,7 +60,6 @@ func extractSchema(uri string) (SchemaParts, error) {
 }
 
 // Based on https://gist.github.com/stoewer/fbe273b711e6a06315d19552dd4d33e6#gistcomment-3673823
-// Should this avoid double underscores for 'mix_Of_Camel_And_Snake_Case'?
 func insertUnderscores(s string) string {
 	var res = make([]rune, 0, len(s))
 	var prev rune

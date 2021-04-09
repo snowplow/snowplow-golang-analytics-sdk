@@ -8,14 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	// "github.com/pkg/errors"
-	//	"unicode" // For camel to snake case - consider alternative?
-	//	"errors" // TODO: Decide what to do for error handling
-	// 	"github.com/hashicorp/go-multierror"
-	//	"github.com/pkg/errors"
 )
 
-// Could use a slice/array instead maybe? Pehaps give it a test - maybe no point
 // Should be named KeyVal not KeyVals
 type KeyVals struct {
 	Key   string
@@ -45,8 +39,10 @@ func parseNullableTime(timeString string) (*time.Time, error) { // Probably no n
 	}
 }
 
-// These should all probably return KeyVals, err
-// Also perhaps they should all return slices - because the custom contexts one returns arbitrary length...
+func parseNullableTimeB(timeString string) (string, error) {
+	return strings.Replace(timeString, " ", "T", -1) + "Z", nil
+}
+
 func parseTime(key string, value string) ([]KeyVals, error) {
 	out, err := parseNullableTime(value)
 	if err != nil {
@@ -287,6 +283,23 @@ func TransformToMap(event string) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "Error parsing tsv string")
 	}
+
+	return mapifyGoodEvent(record, enrichedEventFieldTypes, true)
+}
+
+func TransformToMapB(event string) (map[string]interface{}, error) {
+
+	// I think I prefer to just strings.Split("/t") if safe and faster. Removes an import, and removes the need to needlessly memory on this reader object too.
+	// r := csv.NewReader(strings.NewReader(event))
+	// r.Comma = '\t'
+	// r.LazyQuotes = true
+
+	// record, err := r.Read()
+	// if err != nil {
+	// 	return nil, errors.Wrap(err, "Error parsing tsv string")
+	// }
+
+	record := strings.Split(event, "\t") // slightly faster
 
 	return mapifyGoodEvent(record, enrichedEventFieldTypes, true)
 }
