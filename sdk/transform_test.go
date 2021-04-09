@@ -210,7 +210,7 @@ func BenchmarkTransformToMap(b *testing.B) {
 func TestGetValue(t *testing.T) {
 	assert := assert.New(t)
 
-	appId, err := GetValue(tsvEvent, "appId")
+	appId, err := GetValue(tsvEvent, "app_id")
 
 	assert.Nil(err)
 	assert.Equal("angry-birds", appId)

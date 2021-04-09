@@ -413,15 +413,18 @@ var indexMap = map[string]int16{"app_id": 0,
 // For unstruct_event, it returns a map of only the data for the unstruct event.
 func GetValue(event string, field string) (interface{}, error) {
 
-	// TODO: Return an error if the field doesn't exist, and return an error if it's a zero string
-
-
 	// TODO: DRY HERE
 	record := strings.Split(event, "\t")
 	if len(record) != 131 { // leave hardcoded or not?
 		return nil, errors.New("Cannot get value from event - wrong number of fields")
 	} else {
-		index := indexMap[field]
+		index, ok := indexMap[field]
+		if !ok {
+			return nil, errors.New(fmt.Sprintf("Key %s not a valid atomic field", field))
+		}
+		if record[index] == "" {
+			return nil, errors.New(fmt.Sprintf("Field %s is empty", field)) // Should this be an error?? Should we just return a zero value, or a nil perhaps?
+		}
 		kvPairs, err := enrichedEventFieldTypes[index].ParseFunction(enrichedEventFieldTypes[index].Key, record[index])
 		if err != nil {
 			return nil, err
@@ -453,15 +456,19 @@ func GetSubsetMap(event string, fields []string) (map[string]interface{}, error)
 		// TODO: DRY HERE TOO
 		output := make(map[string]interface{})
 		for _, field := range fields {
-			index := indexMap[field]
-			kvPairs, err := enrichedEventFieldTypes[index].ParseFunction(enrichedEventFieldTypes[index].Key, record[index])
-
-			if err != nil {
-				return nil, err
+			index, ok := indexMap[field]
+			if !ok {
+				return nil, errors.New(fmt.Sprintf("Key %s not a valid atomic field", field))
 			}
+			if record[index] != "" {
+				kvPairs, err := enrichedEventFieldTypes[index].ParseFunction(enrichedEventFieldTypes[index].Key, record[index])
+				if err != nil {
+					return nil, err
+				}
 
-			for _, pair := range kvPairs {
-				output[pair.Key] = pair.Value
+				for _, pair := range kvPairs {
+					output[pair.Key] = pair.Value
+				}
 			}
 		}
 		return output, nil
