@@ -215,6 +215,7 @@ func TestGetValue(t *testing.T) {
 	assert.Nil(err)
 	assert.Equal("angry-birds", appId)
 
+	// TODO: Move vars to vars_test.go
 	unstructMap := map[string]interface{}{
 		"elementClasses": []interface{}{"foreground"},
 		"elementId":      "exampleLink",
@@ -265,4 +266,34 @@ func TestGetValue(t *testing.T) {
 	contextsValue, err := GetValue(tsvEvent, "contexts")
 
 	assert.Equal(contextsMap, contextsValue)
+}
+
+func TestGetSubsetMap(t *testing.T) {
+	assert := assert.New(t)
+
+	subsetMap := map[string]interface{}{
+		"app_id":            "angry-birds",
+		"br_features_flash": false,
+		"br_features_pdf":   true,
+		"collector_tstamp":  &tstampValue,
+	}
+
+	subsetMapValue, _ := GetSubsetMap(tsvEvent, []string{"app_id", "br_features_flash", "br_features_pdf", "collector_tstamp"})
+
+	assert.Equal(subsetMap, subsetMapValue)
+}
+
+func TestGetSubsetJSON(t *testing.T) {
+	assert := assert.New(t)
+
+	subsetJson, _ := json.Marshal(map[string]interface{}{
+		"app_id":            "angry-birds",
+		"br_features_flash": false,
+		"br_features_pdf":   true,
+		"collector_tstamp":  &tstampValue,
+	})
+
+	subsetJsonValue, _ := GetSubsetJson(tsvEvent, []string{"app_id", "br_features_flash", "br_features_pdf", "collector_tstamp"})
+
+	assert.Equal(subsetJson, subsetJsonValue)
 }

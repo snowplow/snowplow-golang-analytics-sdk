@@ -412,6 +412,10 @@ var indexMap = map[string]int16{"app_id": 0,
 // GetValue returns the value for a provided atomic field, without parsing the whole event.
 // For unstruct_event, it returns a map of only the data for the unstruct event.
 func GetValue(event string, field string) (interface{}, error) {
+
+	// TODO: Return an error if the field doesn't exist, and return an error if it's a zero string
+
+
 	// TODO: DRY HERE
 	record := strings.Split(event, "\t")
 	if len(record) != 131 { // leave hardcoded or not?
@@ -428,9 +432,47 @@ func GetValue(event string, field string) (interface{}, error) {
 			for _, pair := range kvPairs {
 				output[pair.Key] = pair.Value
 			}
-			fmt.Println(output)
 			return output, nil
 		}
 		return kvPairs[0].Value, nil
 	}
+}
+
+func GetSubsetMap(event string, fields []string) (map[string]interface{}, error) {
+	// TODO: Same error handling as above required. 
+
+
+	// TODO: DRY HERE
+	record := strings.Split(event, "\t")
+	if len(record) != 131 { // leave hardcoded or not?
+		return nil, errors.New("Cannot get value from event - wrong number of fields")
+	} else {
+		// TODO: DRY HERE TOO
+		output := make(map[string]interface{})
+		for _, field := range fields {
+			index := indexMap[field]
+			kvPairs, err := enrichedEventFieldTypes[index].ParseFunction(enrichedEventFieldTypes[index].Key, record[index])
+
+			if err != nil {
+				return nil, err
+			}
+
+			for _, pair := range kvPairs {
+				output[pair.Key] = pair.Value
+			}
+		}
+		return output, nil
+	}
+}
+
+func GetSubsetJson(event string, fields []string) ([]byte, error) {
+	subsetMap, err := GetSubsetMap(event, fields)
+	if err != nil {
+		return nil, err
+	}
+	subsetJson, err := json.Marshal(subsetMap)
+	if err != nil {
+		return nil, err
+	}
+	return subsetJson, nil
 }
