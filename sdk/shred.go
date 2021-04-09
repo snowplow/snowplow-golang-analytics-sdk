@@ -72,13 +72,14 @@ func extractSchema(uri string) (SchemaParts, error) {
 // Should this avoid double underscores for 'mix_Of_Camel_And_Snake_Case'?
 func insertUnderscores(s string) string {
 	var res = make([]rune, 0, len(s))
+	var prev rune
 	for i, r := range s {
-		if unicode.IsUpper(r) && i > 0 {
+		if unicode.IsUpper(r) && i > 0 && prev != '_' {
 			res = append(res, '_', r)
 		} else {
 			res = append(res, r)
 		}
-		// j := i  .... add j != _ to condition above to avoid double underscores
+		prev = r
 	}
 	return string(res)
 }

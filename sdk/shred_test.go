@@ -5,9 +5,6 @@ import (
 	"testing"
 )
 
-// TODO: Add equality checks for specific error messages
-// TODO: Add benchmarking
-
 func TestExtractSchema(t *testing.T) {
 	assert := assert.New(t)
 
@@ -46,7 +43,7 @@ func TestInsertUnderscores(t *testing.T) {
 	underscoredMixture := insertUnderscores("this_StringIsAMixture")
 
 	assert.Equal("This_String_Is_Camel_Case", underscoredCamelCase)
-	assert.Equal("this__String_Is_A_Mixture", underscoredMixture) // should our function avoid double-underscore in this case???
+	assert.Equal("this_String_Is_A_Mixture", underscoredMixture)
 }
 
 func BenchmarkInsertUnderscores(b *testing.B) {
@@ -97,6 +94,7 @@ func TestShredContexts(t *testing.T) {
 func BenchmarkShredContexts(b *testing.B) {
 	// move to global
 	ctxt := `{"schema":"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-1","data":[{"schema":"iglu:com.acme/test_context/jsonschema/1-0-0","data":{"field1": 1}}, {"schema":"iglu:com.acme/test_context/jsonschema/1-0-0","data":{"field1": 2}}]}`
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		shredContexts(ctxt)
 	}
@@ -123,6 +121,7 @@ func TestShredUnstruct(t *testing.T) {
 
 func BenchmarkShredUnstruct(b *testing.B) {
 	unstruct := `{"data":{"data":{"key":"value"},"schema":"iglu:com.snowplowanalytics.snowplow/link_click/jsonschema/1-0-1"},"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0"}`
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		shredUnstruct(unstruct)
 	}
