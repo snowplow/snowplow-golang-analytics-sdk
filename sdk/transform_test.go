@@ -218,26 +218,3 @@ func BenchmarkTransformToMap(b *testing.B) {
 		TransformToMap(tsvEvent)
 	}
 }
-
-func TestTransformToMapB(t *testing.T) {
-	assert := assert.New(t)
-
-	mapifiedEvent, err := TransformToMap(tsvEvent)
-	failedMapify, err2 := TransformToMap("\t\t\t")
-
-	assert.Nil(err)
-	assert.Equal(eventMap, mapifiedEvent)
-
-	assert.NotNil(err2)
-	assert.Nil(failedMapify)
-}
-
-func BenchmarkTransformToMapB(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		TransformToMapB(tsvEvent)
-	}
-}
-/*
-BenchmarkTransformToMap-8       	    8139	    144698 ns/op
-BenchmarkTransformToMapB-8      	    8875	    135616 ns/op
-*/

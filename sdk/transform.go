@@ -1,7 +1,6 @@
 package sdk
 
 import (
-	"encoding/csv"
 	"encoding/json" // TODO: Look into faster options: https://github.com/json-iterator/go-benchmark https://github.com/buger/jsonparser
 	"fmt"
 	"github.com/pkg/errors"
@@ -273,33 +272,6 @@ func TransformToJson(event string) ([]byte, error) {
 }
 
 func TransformToMap(event string) (map[string]interface{}, error) {
-
-	// I think I prefer to just strings.Split("/t") if safe and faster. Removes an import, and removes the need to needlessly memory on this reader object too.
-	r := csv.NewReader(strings.NewReader(event))
-	r.Comma = '\t'
-	r.LazyQuotes = true
-
-	record, err := r.Read()
-	if err != nil {
-		return nil, errors.Wrap(err, "Error parsing tsv string")
-	}
-
-	return mapifyGoodEvent(record, enrichedEventFieldTypes, true)
-}
-
-func TransformToMapB(event string) (map[string]interface{}, error) {
-
-	// I think I prefer to just strings.Split("/t") if safe and faster. Removes an import, and removes the need to needlessly memory on this reader object too.
-	// r := csv.NewReader(strings.NewReader(event))
-	// r.Comma = '\t'
-	// r.LazyQuotes = true
-
-	// record, err := r.Read()
-	// if err != nil {
-	// 	return nil, errors.Wrap(err, "Error parsing tsv string")
-	// }
-
-	record := strings.Split(event, "\t") // slightly faster
-
+	record := strings.Split(event, "\t")
 	return mapifyGoodEvent(record, enrichedEventFieldTypes, true)
 }
