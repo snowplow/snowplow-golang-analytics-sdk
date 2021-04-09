@@ -218,7 +218,6 @@ func parseUnstruct(key string, value string) ([]KeyVal, error) {
 
 // event is slice because csv package outputs a slice.
 
-
 func mapifyGoodEvent(event []string, knownFields [131]KeyFunctionPair, addGeolocationData bool) (map[string]interface{}, error) {
 	if len(event) != len(knownFields) {
 		return nil, errors.New("Cannot transform event - wrong number of fields")
@@ -245,11 +244,14 @@ func mapifyGoodEvent(event []string, knownFields [131]KeyFunctionPair, addGeoloc
 	}
 }
 
-// Since Golang tries its hardest to design against optional parameters, electing to implement the main Transform function
-// to mirror the most common usage of the function - with addGeolocationData set to true (ie the default in the other SDKs).
+/* Since Golang tries its hardest to design against optional parameters, electing to implement the main Transform function
+to mirror the most common usage of the function - with addGeolocationData set to true (ie the default in the other SDKs).
 
-// Elected to make a function to specifically transform to JSON, with a view to one to transform to Map also
-// This means that having addGeolocationData might lead to proliferation of functions...
+Elected to make a function to specifically transform to JSON, with a view to one to transform to Map also
+This means that having addGeolocationData might lead to proliferation of functions... */
+
+
+// TransformToJson transforms a valid tsv string Snowplow event to a JSON object. It also adds the geo_location field.
 func TransformToJson(event string) ([]byte, error) {
 	mapified, err := TransformToMap(event)
 	if err != nil {
@@ -263,7 +265,10 @@ func TransformToJson(event string) ([]byte, error) {
 	return jsonified, nil
 }
 
+// TransformToMap transforms a valid tsv string Snowplow event to a Go map. It also adds the geo_location field.
 func TransformToMap(event string) (map[string]interface{}, error) {
 	record := strings.Split(event, "\t")
 	return mapifyGoodEvent(record, enrichedEventFieldTypes, true)
 }
+
+// Rename these? eg. just ToJson / ToMap?
