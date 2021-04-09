@@ -32,16 +32,6 @@ func BenchmarkParseNullableTime(b *testing.B) {
 	}
 }
 
-func BenchmarkParseNullableTimeB(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		parseNullableTime("2021-04-07 12:01:01.999")
-	}
-}
-
-/*
-BenchmarkParseNullableTime-8    	 3626828	       332 ns/op
-BenchmarkParseNullableTimeB-8   	 3589748	       330 ns/op
-*/
 
 func TestParseTime(t *testing.T) {
 	assert := assert.New(t)

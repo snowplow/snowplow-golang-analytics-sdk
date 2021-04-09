@@ -22,7 +22,6 @@ type KeyFunctionPair struct {
 	Func ValueParser
 }
 
-// TODO: CHECK IF WE EVEN NEED TO DO THESE TSTAMP FUNCTIONS - OTHER SDKS JUST HANDLE IT AS A STRING
 // Is parse the correct nomenclature?
 // rename to parseTstamp?
 func parseNullableTime(timeString string) (*time.Time, error) { // Probably no need for a pointer here since we're manually parsing the whole thing
@@ -31,15 +30,11 @@ func parseNullableTime(timeString string) (*time.Time, error) { // Probably no n
 	if err != nil {
 		return nil, errors.Wrap(err, fmt.Sprintf("Error parsing timestamp value '%s'", timeString))
 	}
-	if time.Time.IsZero(res) { // This might actually not be necessary as the above returns an error in this case?
+	if time.Time.IsZero(res) { 
 		return nil, errors.New(fmt.Sprintf("Timestamp string '%s' resulted in zero-value timestamp", timeString))
 	} else {
 		return &res, nil
 	}
-}
-
-func parseNullableTimeB(timeString string) (string, error) {
-	return strings.Replace(timeString, " ", "T", -1) + "Z", nil
 }
 
 func parseTime(key string, value string) ([]KeyVals, error) {
