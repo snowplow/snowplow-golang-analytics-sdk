@@ -409,7 +409,7 @@ var indexMap = map[string]int16{"app_id": 0,
 // TODO: Change behaviour for unstruct, perhaps should return a map containing the name too?
 // Since we may not which unstruct event it is ahead of time...
 
-// GetValue returns the value for a provided atomic field, without parsing the whole event.
+// GetValue returns the value for a provided atomic field, without processing the rest of the event.
 // For unstruct_event, it returns a map of only the data for the unstruct event.
 func GetValue(event string, field string) (interface{}, error) {
 
@@ -438,8 +438,11 @@ func GetValue(event string, field string) (interface{}, error) {
 	}
 }
 
+// GetSubsetMap returns a map of a subset of the event, containing only the atomic fields provided, without processing the rest of the event.
+// For custom events and contexts, only "unstruct_event", "contexts", or "derived_contexts" may be provided, which will produce the entire data object for that field.
+// For contexts, the resultant map will contain all occurrences of all contexts within the provided field.
 func GetSubsetMap(event string, fields []string) (map[string]interface{}, error) {
-	// TODO: Same error handling as above required. 
+	// TODO: Same error handling as above required.
 
 
 	// TODO: DRY HERE
@@ -465,6 +468,9 @@ func GetSubsetMap(event string, fields []string) (map[string]interface{}, error)
 	}
 }
 
+// GetSubsetJson returns a JSON object containing a subset of the event, containing only the atomic fields provided, without processing the rest of the event.
+// For custom events and contexts, only "unstruct_event", "contexts", or "derived_contexts" may be provided, which will produce the entire data object for that field.
+// For contexts, the resultant map will contain all occurrences of all contexts within the provided field.
 func GetSubsetJson(event string, fields []string) ([]byte, error) {
 	subsetMap, err := GetSubsetMap(event, fields)
 	if err != nil {
@@ -476,3 +482,26 @@ func GetSubsetJson(event string, fields []string) ([]byte, error) {
 	}
 	return subsetJson, nil
 }
+
+
+/* DESIGN DECISION:
+
+TransformToMap and TransfromToJson as it stands both ad geo_location by default.
+geo_location is a field specific to elasticsearch mappings. It is normally an optional parameter defaulting to true.
+
+For consistency this sdk should provide a means of including it but it shouldn't be mandatory.
+Since optional parameters aren't a thing in Go, we have a couple of options:
+
+Option 1:
+
+Provide additional methods for this eg. TransformToMapWithGeo()
+(feels like if going this route it's better to make the default one _not_ include it under the assumption that most won't actually want it)
+
+Option 2:
+Leave it as is, but the canonical way to transform _without_ the geo_location field is to use GetSubsetMap() or GetSubsetJson.
+If going this route, we must decide how to do so - I reckon provide either []string{"all"} or an empty slice.
+Empty slice has the downside that programmatic use of the function might end up accidentally transforming everything when we don't desire to transform anything...
+
+Option 1 feels more idiomatic and intuitive tbh...
+
+*/
