@@ -18,7 +18,7 @@ type ValueParser func(string, string) ([]KeyVal, error)
 
 type KeyFunctionPair struct {
 	Key  string
-	Func ValueParser
+	ParseFunction ValueParser
 }
 
 var enrichedEventFieldTypes = [131]KeyFunctionPair{KeyFunctionPair{"app_id", parseString},
@@ -230,7 +230,7 @@ func mapifyGoodEvent(event []string, knownFields [131]KeyFunctionPair, addGeoloc
 			// skip if empty
 			if event[index] != "" {
 				// apply function if not empty
-				kVPair, err := knownFields[index].Func(knownFields[index].Key, value)
+				kVPair, err := knownFields[index].ParseFunction(knownFields[index].Key, value)
 				if err != nil {
 					return nil, err
 				}
@@ -251,7 +251,8 @@ Elected to make a function to specifically transform to JSON, with a view to one
 This means that having addGeolocationData might lead to proliferation of functions... */
 
 
-// TransformToJson transforms a valid tsv string Snowplow event to a JSON object. It also adds the geo_location field.
+// TransformToJson transforms a valid tsv string Snowplow event to a JSON object.
+// It also adds the geo_location field.
 func TransformToJson(event string) ([]byte, error) {
 	mapified, err := TransformToMap(event)
 	if err != nil {
