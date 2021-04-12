@@ -253,11 +253,11 @@ var eventMap = map[string]interface{}{
 }
 
 
-var unstructMap = map[string]interface{}{
+var unstructMap = map[string]interface{}{"unstruct_event_com_snowplowanalytics_snowplow_link_click_1": map[string]interface{}{
 	"elementClasses": []interface{}{"foreground"},
 	"elementId":      "exampleLink",
 	"targetUrl":      "http://www.example.com",
-}
+}}
 
 var contextsMap = map[string]interface{}{
 	"contexts_org_w3_performance_timing_1": []interface{}{

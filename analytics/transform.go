@@ -406,10 +406,7 @@ var indexMap = map[string]int16{"app_id": 0,
 	"true_tstamp": 130,
 }
 
-// TODO: Change behaviour for unstruct, perhaps should return a map containing the name too?
-// Since we may not know which unstruct event it is ahead of time...
-// Either: {"unstruct_event_com_acme_event_1": {"field1": "value1"}} OR {"event": "unstruct_event_com_acme_event_1", "field1": "value1"}
-
+// Design decision: unstruct_event, contexts and derived_contexts return the structure `{"unstruct_event_com_acme_event_1": {"field1": "value1"}}`
 
 // GetValue returns the value for a provided atomic field, without processing the rest of the event.
 // For unstruct_event, it returns a map of only the data for the unstruct event.
@@ -431,7 +428,7 @@ func GetValue(event string, field string) (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-		if len(kvPairs) > 1 {
+		if field == "contexts" || field == "derived_contexts" || field == "unstruct" {
 			// TODO: DRY HERE TOO?
 			output := make(map[string]interface{})
 			for _, pair := range kvPairs {
