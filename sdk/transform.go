@@ -407,7 +407,9 @@ var indexMap = map[string]int16{"app_id": 0,
 }
 
 // TODO: Change behaviour for unstruct, perhaps should return a map containing the name too?
-// Since we may not which unstruct event it is ahead of time...
+// Since we may not know which unstruct event it is ahead of time...
+// Either: {"unstruct_event_com_acme_event_1": {"field1": "value1"}} OR {"event": "unstruct_event_com_acme_event_1", "field1": "value1"}
+
 
 // GetValue returns the value for a provided atomic field, without processing the rest of the event.
 // For unstruct_event, it returns a map of only the data for the unstruct event.

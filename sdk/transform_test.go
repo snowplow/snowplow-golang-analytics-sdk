@@ -215,85 +215,44 @@ func TestGetValue(t *testing.T) {
 	assert.Nil(err)
 	assert.Equal("angry-birds", appId)
 
-	// TODO: Move vars to vars_test.go
-	unstructMap := map[string]interface{}{
-		"elementClasses": []interface{}{"foreground"},
-		"elementId":      "exampleLink",
-		"targetUrl":      "http://www.example.com",
-	}
-
 	unstructValue, err := GetValue(tsvEvent, "unstruct_event")
 
 	assert.Equal(unstructMap, unstructValue)
 
-	contextsMap := map[string]interface{}{
-		"contexts_org_w3_performance_timing_1": []interface{}{
-			map[string]interface{}{
-				"connectEnd":                 1.415358090183e+12,
-				"connectStart":               1.415358090103e+12,
-				"domComplete":                0.0,
-				"domContentLoadedEventEnd":   1.415358091309e+12,
-				"domContentLoadedEventStart": 1.415358090968e+12,
-				"domInteractive":             1.415358090886e+12,
-				"domLoading":                 1.41535809027e+12,
-				"domainLookupEnd":            1.415358090102e+12,
-				"domainLookupStart":          1.415358090102e+12,
-				"fetchStart":                 1.41535808987e+12,
-				"loadEventEnd":               0.0,
-				"loadEventStart":             0.0,
-				"navigationStart":            1.415358089861e+12,
-				"redirectEnd":                0.0,
-				"redirectStart":              0.0,
-				"requestStart":               1.415358090183e+12,
-				"responseEnd":                1.415358090265e+12,
-				"responseStart":              1.415358090265e+12,
-				"unloadEventEnd":             1.415358090287e+12,
-				"unloadEventStart":           1.41535809027e+12,
-			},
-		},
-		"contexts_org_schema_web_page_1": []interface{}{
-			map[string]interface{}{
-				"author":        "Fred Blundun",
-				"breadcrumb":    []interface{}{"blog", "releases"},
-				"datePublished": "2014-11-06T00:00:00Z",
-				"genre":         "blog",
-				"inLanguage":    "en-US",
-				"keywords":      []interface{}{"snowplow", "javascript", "tracker", "event"},
-			},
-		},
-	}
-
 	contextsValue, err := GetValue(tsvEvent, "contexts")
 
 	assert.Equal(contextsMap, contextsValue)
+
+	failureValue, err := GetValue(tsvEvent, "not_a_field")
+
+	assert.Nil(failureValue)
+	assert.NotNil(err)
 }
 
 func TestGetSubsetMap(t *testing.T) {
 	assert := assert.New(t)
 
-	subsetMap := map[string]interface{}{
-		"app_id":            "angry-birds",
-		"br_features_flash": false,
-		"br_features_pdf":   true,
-		"collector_tstamp":  &tstampValue,
-	}
-
-	subsetMapValue, _ := GetSubsetMap(tsvEvent, []string{"app_id", "br_features_flash", "br_features_pdf", "collector_tstamp"})
+	subsetMapValue, err := GetSubsetMap(tsvEvent, []string{"app_id", "br_features_flash", "br_features_pdf", "collector_tstamp"})
 
 	assert.Equal(subsetMap, subsetMapValue)
+	assert.Nil(err)
+
+	failureMap, err := GetSubsetMap(tsvEvent, []string{"not_a_field", "app_id", "br_features_flash", "br_features_pdf", "collector_tstamp"})
+
+	assert.Nil(failureMap)
+	assert.NotNil(err)
 }
 
 func TestGetSubsetJSON(t *testing.T) {
 	assert := assert.New(t)
 
-	subsetJson, _ := json.Marshal(map[string]interface{}{
-		"app_id":            "angry-birds",
-		"br_features_flash": false,
-		"br_features_pdf":   true,
-		"collector_tstamp":  &tstampValue,
-	})
-
-	subsetJsonValue, _ := GetSubsetJson(tsvEvent, []string{"app_id", "br_features_flash", "br_features_pdf", "collector_tstamp"})
+	subsetJsonValue, err := GetSubsetJson(tsvEvent, []string{"app_id", "br_features_flash", "br_features_pdf", "collector_tstamp"})
 
 	assert.Equal(subsetJson, subsetJsonValue)
+	assert.Nil(err)
+
+	failureJson, err := GetSubsetJson(tsvEvent, []string{"not_a_field", "app_id", "br_features_flash", "br_features_pdf", "collector_tstamp"})
+
+	assert.Nil(failureJson)
+	assert.NotNil(err)
 }
