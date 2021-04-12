@@ -1,4 +1,4 @@
-package sdk
+package analytics
 
 import (
 	"encoding/json"

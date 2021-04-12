@@ -1,4 +1,4 @@
-package sdk
+package analytics
 
 import (
 	"encoding/json" // TODO: Look into faster options: https://github.com/json-iterator/go-benchmark https://github.com/buger/jsonparser

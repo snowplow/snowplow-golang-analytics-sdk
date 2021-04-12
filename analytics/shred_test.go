@@ -1,4 +1,4 @@
-package sdk
+package analytics
 
 import (
 	"github.com/stretchr/testify/assert"

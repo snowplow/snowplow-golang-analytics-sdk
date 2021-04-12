@@ -1,4 +1,4 @@
-package sdk // Terrible name... TODO: Come up with a better name
+package analytics // Terrible name... TODO: Come up with a better name
 
 import (
 	"encoding/json"
