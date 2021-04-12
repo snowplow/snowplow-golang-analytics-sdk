@@ -169,6 +169,9 @@ func parseNullableTime(timeString string) (*time.Time, error) { // Probably no n
 	}
 }
 
+// TODO: if parseString throws for zero strings, the rest should too.
+// It shouldn't happen since we check for empty strings after splitting the TSV, but including it makes any future issue more debuggable.
+
 func parseTime(key string, value string) ([]KeyVal, error) {
 	out, err := parseNullableTime(value)
 	if err != nil {
@@ -177,7 +180,7 @@ func parseTime(key string, value string) ([]KeyVal, error) {
 	return []KeyVal{KeyVal{key, out}}, err
 }
 
-func parseString(key string, value string) ([]KeyVal, error) { // throw an error if it's a zero string?
+func parseString(key string, value string) ([]KeyVal, error) {
 	if value == "" {
 		return nil, errors.Wrap(errors.New("Zero value found for string"), key)
 	}
@@ -215,8 +218,6 @@ func parseContexts(key string, value string) ([]KeyVal, error) {
 func parseUnstruct(key string, value string) ([]KeyVal, error) {
 	return shredUnstruct(value)
 }
-
-// event is slice because csv package outputs a slice.
 
 func mapifyGoodEvent(event []string, knownFields [131]KeyFunctionPair, addGeolocationData bool) (map[string]interface{}, error) {
 	if len(event) != len(knownFields) {
@@ -271,7 +272,11 @@ func TransformToMap(event string) (map[string]interface{}, error) {
 	return mapifyGoodEvent(record, enrichedEventFieldTypes, true)
 }
 
-// Rename these? eg. just ToJson / ToMap?
+// Rename the above? eg. just ToJson / ToMap?
+
+// TODO: Move this and improve code cleanliness
+
+// TODO further: Figure out if this can be integrated with our key function pairs, without performance cost.
 
 var indexMap = map[string]int16{"app_id": 0,
 	"platform": 1,
@@ -406,7 +411,7 @@ var indexMap = map[string]int16{"app_id": 0,
 	"true_tstamp": 130,
 }
 
-// Design decision: unstruct_event, contexts and derived_contexts return the structure `{"unstruct_event_com_acme_event_1": {"field1": "value1"}}`
+// Design decision made: unstruct_event, contexts and derived_contexts return the structure `{"unstruct_event_com_acme_event_1": {"field1": "value1"}}`
 
 // GetValue returns the value for a provided atomic field, without processing the rest of the event.
 // For unstruct_event, it returns a map of only the data for the unstruct event.
@@ -444,7 +449,7 @@ func GetValue(event string, field string) (interface{}, error) {
 // For custom events and contexts, only "unstruct_event", "contexts", or "derived_contexts" may be provided, which will produce the entire data object for that field.
 // For contexts, the resultant map will contain all occurrences of all contexts within the provided field.
 func GetSubsetMap(event string, fields []string) (map[string]interface{}, error) {
-	// TODO: Same error handling as above required.
+	// TODO: Same error handling issue as above - what should the behaviour be in case of no value?
 
 
 	// TODO: DRY HERE

@@ -1,4 +1,4 @@
-package analytics // Terrible name... TODO: Come up with a better name
+package analytics
 
 import (
 	"encoding/json"
@@ -9,10 +9,9 @@ import (
 	"unicode" // For camel to snake case - consider alternative?
 )
 
-// This should be SelfDescribingData...
 type SelfDescribingData struct {
 	Schema string
-	Data   map[string]interface{} // TODO: See if leaving data as a string would work, and would be faster.
+	Data   map[string]interface{} // TODO: See if leaving data as a string or byte array would work, and would be faster.
 }
 
 type Contexts struct {
@@ -34,7 +33,7 @@ type SchemaParts struct {
 	Revision string
 }
 
-// Should be const??
+// Should be const?
 var SCHEMA_URI_REGEX = `(?P<protocol>^iglu:)(?P<vendor>[a-zA-Z0-9-_.]+)/(?P<name>[a-zA-Z0-9-_]+)/(?P<format>[a-zA-Z0-9-_]+)/(?P<model>[1-9][0-9]*)(?P<revision>(?:-(?:0|[1-9][0-9]*)){2}$)`
 
 // Take regex capture group names out, as not used?
