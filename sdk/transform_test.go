@@ -229,9 +229,19 @@ func TestGetValue(t *testing.T) {
 	assert.NotNil(err)
 }
 
+
+func BenchmarkGetValue(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		GetValue(tsvEvent, "app_id")
+		GetValue(tsvEvent, "contexts")
+		GetValue(tsvEvent, "unstruct_event") // Calling it three times to ensure benchmark includes both simple and complex cases
+	}
+}
+
 func TestGetSubsetMap(t *testing.T) {
 	assert := assert.New(t)
 
+	// TODO: Include contexts and unstruct in this, those should be part of any unit test.
 	subsetMapValue, err := GetSubsetMap(tsvEvent, []string{"app_id", "br_features_flash", "br_features_pdf", "collector_tstamp"})
 
 	assert.Equal(subsetMap, subsetMapValue)
@@ -241,6 +251,12 @@ func TestGetSubsetMap(t *testing.T) {
 
 	assert.Nil(failureMap)
 	assert.NotNil(err)
+}
+
+func BenchmarkGetSubsetMap(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		GetSubsetMap(tsvEvent, []string{"app_id", "br_features_flash", "br_features_pdf", "collector_tstamp", "contexts", "unstruct_event"})
+	}
 }
 
 func TestGetSubsetJSON(t *testing.T) {
@@ -255,4 +271,10 @@ func TestGetSubsetJSON(t *testing.T) {
 
 	assert.Nil(failureJson)
 	assert.NotNil(err)
+}
+
+func BenchmarkGetSubsetJson(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		GetSubsetJson(tsvEvent, []string{"app_id", "br_features_flash", "br_features_pdf", "collector_tstamp", "contexts", "unstruct_event"})
+	}
 }

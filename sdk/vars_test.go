@@ -301,11 +301,6 @@ var subsetMap = map[string]interface{}{
 		"br_features_flash": false,
 		"br_features_pdf":   true,
 		"collector_tstamp":  &tstampValue,
-	}
+}
 
-var subsetJson, _ = json.Marshal(map[string]interface{}{
-	"app_id":            "angry-birds",
-	"br_features_flash": false,
-	"br_features_pdf":   true,
-	"collector_tstamp":  &tstampValue,
-})
+var subsetJson, _ = json.Marshal(subsetMap)
