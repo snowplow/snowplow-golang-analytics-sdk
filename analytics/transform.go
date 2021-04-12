@@ -433,7 +433,7 @@ func GetValue(event string, field string) (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-		if field == "contexts" || field == "derived_contexts" || field == "unstruct" {
+		if field == "contexts" || field == "derived_contexts" || field == "unstruct_event" {
 			// TODO: DRY HERE TOO?
 			output := make(map[string]interface{})
 			for _, pair := range kvPairs {
