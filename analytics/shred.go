@@ -107,7 +107,7 @@ func shredContexts(contexts string) ([]KeyVal, error) {
 
 	var distinctContexts = make(map[string][]interface{})
 	for _, entry := range ctxts.Data {
-		key, err := fixSchema("contexts", entry.Schema) // is key a crap var name here?
+		key, err := fixSchema("contexts", entry.Schema) // is key a bad var name here?
 		if err != nil {
 			return nil, errors.Wrap(err, "Error parsing contexts") // Too much nesting of error wrapping?
 		}
