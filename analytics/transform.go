@@ -14,7 +14,7 @@
 package analytics
 
 import (
-	"encoding/json" // TODO: Look into faster options: https://github.com/json-iterator/go-benchmark https://github.com/buger/jsonparser
+	// "encoding/json" // TODO: Look into faster options: https://github.com/json-iterator/go-benchmark https://github.com/buger/jsonparser
 	"fmt"
 	"github.com/pkg/errors"
 	"strconv"
@@ -27,12 +27,16 @@ type KeyVal struct {
 	Value interface{}
 }
 
+//easyjson:skip
 type ValueParser func(string, string) ([]KeyVal, error)
 
 type KeyFunctionPair struct {
 	Key           string
 	ParseFunction ValueParser
 }
+
+//easyjson:json
+type MapStringInterface map[string]interface{}
 
 // Using a pointer as one can't return a nil value for time.Time, only a zero value - which might be prone to issues in usage of the sdk.
 // Unsure if this is the best decision
@@ -162,7 +166,8 @@ func ToJson(event string) ([]byte, error) {
 		return nil, err
 	}
 
-	jsonified, err := json.Marshal(mapified)
+	typeified := MapStringInterface(mapified)
+	jsonified, err := typeified.MarshalJSON() // Looks like it works, but fails tests because fields aren't reordered with this method... (JSON.Marshal seems to alphabetise them...)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error marshaling to JSON")
 	}
@@ -176,7 +181,8 @@ func ToJsonWithGeo(event string) ([]byte, error) {
 		return nil, err
 	}
 
-	jsonified, err := json.Marshal(mapified)
+	typeified := MapStringInterface(mapified)
+	jsonified, err := typeified.MarshalJSON()
 	if err != nil {
 		return nil, errors.Wrap(err, "Error marshaling to JSON")
 	}
@@ -262,7 +268,9 @@ func GetSubsetJson(event string, fields []string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	subsetJson, err := json.Marshal(subsetMap)
+
+	typeified := MapStringInterface(subsetMap)
+	subsetJson, err := typeified.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}

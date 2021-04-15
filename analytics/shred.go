@@ -14,7 +14,8 @@
 package analytics
 
 import (
-	"encoding/json"
+	// "encoding/json"
+	// "github.com/mailru/easyjson"
 	"fmt"
 	"github.com/pkg/errors"
 	"regexp"
@@ -23,18 +24,18 @@ import (
 )
 
 type SelfDescribingData struct {
-	Schema string
-	Data   map[string]interface{} // TODO: See if leaving data as a string or byte array would work, and would be faster.
+	Schema string `json:"schema"`
+	Data   map[string]interface{} `json:"data"` // TODO: See if leaving data as a string or byte array would work, and would be faster.
 }
 
 type Contexts struct {
-	Schema string
-	Data   []SelfDescribingData
+	Schema string `json:"schema"`
+	Data   []SelfDescribingData `json:"data"`
 }
 
 type UnstructEvent struct {
-	Schema string
-	Data   SelfDescribingData
+	Schema string `json:"schema"`
+	Data   SelfDescribingData `json:"data"`
 }
 
 type SchemaParts struct {
@@ -100,7 +101,7 @@ func fixSchema(prefix string, schemaUri string) (string, error) {
 func shredContexts(contexts string) ([]KeyVal, error) {
 	ctxts := Contexts{}
 
-	err := json.Unmarshal([]byte(contexts), &ctxts)
+	err := ctxts.UnmarshalJSON([]byte(contexts))
 	if err != nil {
 		return nil, errors.Wrap(err, "Error unmarshaling context JSON")
 	}
@@ -132,9 +133,9 @@ func shredContexts(contexts string) ([]KeyVal, error) {
 
 func shredUnstruct(unstruct string) ([]KeyVal, error) {
 
-	event := UnstructEvent{}
+	var event UnstructEvent
 
-	err := json.Unmarshal([]byte(unstruct), &event)
+	err := event.UnmarshalJSON([]byte(unstruct))
 	if err != nil {
 		return nil, errors.Wrap(err, "Error unmarshaling unstruct event JSON")
 	}
