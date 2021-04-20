@@ -101,7 +101,7 @@ ToMapWithGeo adds the geo_location field, and transforms a valid Snowplow Parsed
 
 ## Copyright and license
 
-SQL Runner is copyright 2021 Snowplow Analytics Ltd.
+Snowplow Golang Analytics SDK is copyright 2021 Snowplow Analytics Ltd.
 
 Licensed under the **[Apache License, Version 2.0][license]** (the "License");
 you may not use this software except in compliance with the License.
