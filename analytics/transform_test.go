@@ -292,7 +292,7 @@ func TestGetValue(t *testing.T) {
 	// correct value simple field
 	appId, err := fullEvent.GetValue("app_id")
 	assert.Nil(err)
-	assert.Equal("angry-birds", appId)
+	assert.Equal("<>angry-birds", appId)
 
 	// correct value unstruct field
 	unstructValue, err := fullEvent.GetValue("unstruct_event")
