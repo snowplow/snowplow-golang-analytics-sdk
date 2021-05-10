@@ -16,12 +16,6 @@ This data is then made available in-stream for real-time processing, and can als
 
 The Snowplow atomic data acts as an immutable log of all the actions that occurred across your digital products. The [analytics SDKs][sdk-docs] are libraries in a range languages which facilitate working with Snowplow Enriched data, by transforming it from its original TSV format to a more amenable format for programmatic interaction - for example JSON.
 
-## Try Snowplow
-
-This repo contains an analytics SDK which is relevant to users who already have a full Snowplow pipeline running (which can be done Open Source or via our [Snowplow Insights](https://snowplowanalytics.com/snowplow-insights/) service).
-
-If you don't have a pipeline yet, you might be interested in finding out what Snowplow can do by setting up [Try Snowplow](https://try.snowplowanalytics.com/?utm_source=github&utm_medium=post&utm_campaign=try-snowplow).
-
 ## Quickstart
 
 ```bash
