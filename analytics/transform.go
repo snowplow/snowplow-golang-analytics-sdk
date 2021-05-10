@@ -104,12 +104,12 @@ func parseUnstruct(key string, value string) ([]KeyVal, error) {
 	return shredUnstruct(value)
 }
 
-// ParseEvent takes a Snowplow Enriched event tsv string as input, and returns a 'ParsedEvent' typed slice of strings. 
+// ParseEvent takes a Snowplow Enriched event tsv string as input, and returns a 'ParsedEvent' typed slice of strings.
 // Methods may then be called on the resulting ParsedEvent type to transform the event, or a subset of the event to Map or Json.
 func ParseEvent(event string) (ParsedEvent, error) {
 	record := strings.Split(event, "\t")
 	if len(record) != eventLength {
-		return nil, errors.New(fmt.Sprintf("Cannot parse tsv event - wrong number of fields provided: %v", len(event)))
+		return nil, errors.New(fmt.Sprintf("Cannot parse tsv event - wrong number of fields provided: %v", len(record)))
 	}
 	return record, nil
 }
