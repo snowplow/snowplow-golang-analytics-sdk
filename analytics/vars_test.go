@@ -35,7 +35,7 @@ var derivedContextsString = `{"schema":"iglu:com.snowplowanalytics.snowplow\/con
 
 // full event slice
 var fullEvent = ParsedEvent([]string{
-	"angry-birds",
+	"<>angry-birds",
 	"web",
 	"2013-11-26 00:03:57.885",
 	"2013-11-26 00:03:57.885",
@@ -172,7 +172,7 @@ var fullEvent = ParsedEvent([]string{
 var tsvEvent = strings.Join(fullEvent, "\t")
 
 var eventMapWithGeo = map[string]interface{}{
-	"app_id":            "angry-birds",
+	"app_id":            "<>angry-birds",
 	"br_features_flash": false,
 	"br_features_pdf":   true,
 	"collector_tstamp":  tstampValue,

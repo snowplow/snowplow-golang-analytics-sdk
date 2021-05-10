@@ -23,6 +23,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+var ConfigCompatibleWithStandardLibrary = jsoniter.Config{EscapeHTML: false}
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 type SelfDescribingData struct {
