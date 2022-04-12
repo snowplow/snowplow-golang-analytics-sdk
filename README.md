@@ -1,6 +1,6 @@
 # Snowplow Golang Analytics SDK
 
-[![Build Status][gh-actions-image]][gh-actions] [![Release][release-image]][releases] [![License][license-image]][license]
+[![Build Status][gh-actions-image]][gh-actions] [![Coveralls][coveralls-image]][coveralls] [![Go Report Card][goreport-image]][goreport] [![Release][release-image]][releases] [![License][license-image]][license]
 
 ![snowplow-logo](media/snowplow_logo.png)
 
@@ -170,14 +170,20 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-[gh-actions]: https://github.com/snowplow/snowplow-golang-analytics-sdk/actions
 [gh-actions-image]: https://github.com/snowplow/snowplow-golang-analytics-sdk/workflows/Test/badge.svg?branch=master
+[gh-actions]: https://github.com/snowplow/snowplow-golang-analytics-sdk/actions
+
+[coveralls-image]: https://coveralls.io/repos/github/snowplow/snowplow-golang-analytics-sdk/badge.svg?branch=master
+[coveralls]: https://coveralls.io/github/snowplow-golang-analytics-sdk/snowplow?branch=master
 
 [release-image]: https://img.shields.io/github/v/release/snowplow/snowplow-golang-analytics-sdk?include_prereleases
-[releases]: https://img.shields.io/github/v/release/snowplow/snowplow-golang-tracker
+[releases]: https://img.shields.io/github/v/release/snowplow/snowplow-golang-analytics-sdk
 
 [license-image]: http://img.shields.io/badge/license-Apache--2-blue.svg?style=flat
 [license]: http://www.apache.org/licenses/LICENSE-2.0
 
 [tracker-docs]: https://docs.snowplowanalytics.com/docs/collecting-data/collecting-from-own-applications/
 [sdk-docs]: https://docs.snowplowanalytics.com/docs/modeling-your-data/analytics-sdk/
+
+[goreport]: https://goreportcard.com/report/github.com/snowplow/snowplow-golang-analytics-sdk
+[goreport-image]: https://goreportcard.com/badge/github.com/snowplow/snowplow-golang-analytics-sdk
