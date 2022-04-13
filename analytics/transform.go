@@ -22,7 +22,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-const eventLength int = 131
+const (
+	eventLength   int    = 131
+	EmptyFieldErr string = `Field is empty`
+)
 
 type KeyVal struct {
 	Key   string
@@ -179,10 +182,8 @@ func (event ParsedEvent) ToJsonWithGeo() ([]byte, error) {
 	return jsonified, nil
 }
 
-// GetValue returns the value for a provided atomic field, without processing the rest of the event.
-// For unstruct_event, it returns a map of only the data for the unstruct event.
-func (event ParsedEvent) GetValue(field string) (interface{}, error) {
-
+// getParsedValue gets a field's value from an event after parsing it with its specific ParseFunction
+func (event ParsedEvent) getParsedValue(field string) ([]KeyVal, error) {
 	if len(event) != eventLength {
 		return nil, errors.New(fmt.Sprintf("Cannot get value - wrong number of fields provided: %v", len(event)))
 	}
@@ -191,22 +192,116 @@ func (event ParsedEvent) GetValue(field string) (interface{}, error) {
 		return nil, errors.New(fmt.Sprintf("Key %s not a valid atomic field", field))
 	}
 	if event[index] == "" {
-		return nil, errors.New(fmt.Sprintf("Field %s is empty", field))
+		return nil, errors.New(EmptyFieldErr)
 	}
 	kvPairs, err := enrichedEventFieldTypes[index].ParseFunction(enrichedEventFieldTypes[index].Key, event[index])
 	if err != nil {
 		return nil, err
 	}
-	if field == "contexts" || field == "derived_contexts" || field == "unstruct_event" {
-		// TODO: DRY HERE TOO?
-		output := make(map[string]interface{})
-		for _, pair := range kvPairs {
-			output[pair.Key] = pair.Value
-		}
-		return output, nil
+
+	return kvPairs, nil
+}
+
+// GetValue returns the value for a provided atomic field, without processing the rest of the event.
+// For unstruct_event, it returns a map of only the data for the unstruct event.
+func (event ParsedEvent) GetValue(field string) (interface{}, error) {
+	kvPairs, err := event.getParsedValue(field)
+	if err != nil {
+		return nil, err
 	}
 	return kvPairs[0].Value, nil
+}
 
+// GetUnstructEventValue returns the value for a provided atomic field inside an event's unstruct_event field
+func (event ParsedEvent) GetUnstructEventValue(path ...interface{}) (interface{}, error) {
+	field := "unstruct_event"
+
+	kvPairs, err := event.getParsedValue(field)
+	if err != nil {
+		return nil, err
+	}
+
+	// extract the key/value pairs of the event field into a map
+	eventMap := make(map[string]interface{})
+	for _, pair := range kvPairs {
+		eventMap[pair.Key] = pair.Value
+	}
+
+	j, err := json.Marshal(eventMap)
+	if err != nil {
+		return nil, err
+	}
+
+	b := make([]interface{}, len(path))
+	for idx := range path {
+		b[idx] = path[idx]
+	}
+
+	el := json.Get(j, b...)
+	return el.GetInterface(), nil
+}
+
+// GetContextValue returns the value for a provided atomic field inside an event's contexts or derived_contexts
+func (event ParsedEvent) GetContextValue(contextName string, path ...interface{}) (interface{}, error) {
+	contextNames := []string{`contexts`, `derived_contexts`}
+	var contexts []interface{}
+	for _, c := range contextNames {
+		kvPairs, err := event.getParsedValue(c)
+		if err != nil && err.Error() != EmptyFieldErr {
+			return nil, err
+		}
+		// extract the key/value pairs of the event path into a map
+		eventMap := make(map[string]interface{})
+		for _, pair := range kvPairs {
+			eventMap[pair.Key] = pair.Value
+		}
+		contexts = append(contexts, eventMap)
+	}
+
+	var output []map[string]interface{}
+	b := make([]interface{}, len(path))
+	for idx := range path {
+		b[idx] = path[idx]
+	}
+
+	// iterate through all contextNames and extract the requested path to the output slice
+	for _, ctx := range contexts {
+		for key, contextSlice := range ctx.(map[string]interface{}) {
+			if key == contextName {
+				for _, ctxValues := range contextSlice.([]interface{}) {
+					ctxValuesMap := ctxValues.(map[string]interface{})
+					// output whole context if path is not defined
+					if len(path) == 0 {
+						output = append(output, ctxValuesMap)
+						continue
+					}
+					j, err := json.Marshal(ctxValuesMap)
+					if err != nil {
+						return nil, err
+					}
+					el := json.Get(j, b...)
+					if el.LastError() == nil {
+						var parsedPath string
+						for _, p := range path {
+							switch p.(type) {
+							case int:
+								parsedPath += `[` + strconv.Itoa(p.(int)) + `]`
+							case string:
+								parsedPath += `.` + p.(string)
+							default:
+								return nil, errors.New(`Invalid path input`)
+							}
+						}
+
+						output = append(output, map[string]interface{}{
+							parsedPath[1:]: el.GetInterface(),
+						})
+					}
+				}
+			}
+		}
+	}
+	return output, nil
 }
 
 // GetSubsetMap returns a map of a subset of the event, containing only the atomic fields provided, without processing the rest of the event.

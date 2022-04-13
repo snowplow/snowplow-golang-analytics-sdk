@@ -285,10 +285,9 @@ var eventMapWithoutGeo = copyWithoutGeo(eventMapWithGeo)
 
 var unstructMap = map[string]interface{}{"unstruct_event_com_snowplowanalytics_snowplow_link_click_1": eventMapWithGeo["unstruct_event_com_snowplowanalytics_snowplow_link_click_1"]}
 
-var contextsMap = map[string]interface{}{
-	"contexts_org_w3_performance_timing_1": eventMapWithGeo["contexts_org_w3_performance_timing_1"],
-	"contexts_org_schema_web_page_1":       eventMapWithGeo["contexts_org_schema_web_page_1"],
-}
+var contextsMap = []map[string]interface{}{{"breadcrumb[0]": "blog"}}
+
+var wholeContextMap = []map[string]interface{}{{"author": "Fred Blundun", "breadcrumb": []interface{}{"blog", "releases"}, "datePublished": "2014-11-06T00:00:00Z", "genre": "blog", "inLanguage": "en-US", "keywords": []interface{}{"snowplow", "javascript", "tracker", "event"}}}
 
 var subsetMap = map[string]interface{}{
 	"app_id":            eventMapWithGeo["app_id"],

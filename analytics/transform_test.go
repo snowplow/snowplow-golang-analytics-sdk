@@ -294,16 +294,6 @@ func TestGetValue(t *testing.T) {
 	assert.Nil(err)
 	assert.Equal("<>angry-birds", appId)
 
-	// correct value unstruct field
-	unstructValue, err := fullEvent.GetValue("unstruct_event")
-	assert.Nil(err)
-	assert.Equal(unstructMap, unstructValue)
-
-	// correct value contexts
-	contextsValue, err := fullEvent.GetValue("contexts")
-	assert.Nil(err)
-	assert.Equal(contextsMap, contextsValue)
-
 	// incorrect field name
 	failureValue, err := fullEvent.GetValue("not_a_field")
 	assert.Nil(failureValue)
@@ -313,6 +303,38 @@ func TestGetValue(t *testing.T) {
 	emptyValue, err := fullEvent.GetValue("ti_name")
 	assert.Nil(emptyValue)
 	assert.NotNil(err)
+}
+
+func TestGetUnstructEventValue(t *testing.T) {
+	assert := assert.New(t)
+
+	// correct value unstruct field
+	unstructValue, err := fullEvent.GetUnstructEventValue(`unstruct_event_com_snowplowanalytics_snowplow_link_click_1`, `elementClasses`, 0)
+	assert.Nil(err)
+	assert.Equal(`foreground`, unstructValue)
+
+	unstructValue, err = fullEvent.GetUnstructEventValue(`unstruct_event_com_snowplowanalytics_snowplow_link_click_1`, `elementId`)
+	assert.Nil(err)
+	assert.Equal(`exampleLink`, unstructValue)
+}
+
+func TestGetContextValue(t *testing.T) {
+	assert := assert.New(t)
+
+	// correct value contexts
+	contextsValue, err := fullEvent.GetContextValue(`contexts_org_schema_web_page_1`, "breadcrumb", 0)
+	assert.Nil(err)
+	assert.Equal(contextsMap, contextsValue)
+
+	// correct value contexts
+	contextsValue, err = fullEvent.GetContextValue(`contexts_org_schema_web_page_1`)
+	assert.Nil(err)
+	assert.Equal(wholeContextMap, contextsValue)
+
+	// correct value contexts
+	contextsValue, err = fullEvent.GetContextValue(`contexts_org_schema_web_page_1`, "breadcrumb", 3)
+	assert.Nil(err)
+	assert.Equal([]map[string]interface{}(nil), contextsValue)
 }
 
 func BenchmarkGetValue(b *testing.B) {
