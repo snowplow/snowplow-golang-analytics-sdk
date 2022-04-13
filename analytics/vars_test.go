@@ -285,9 +285,11 @@ var eventMapWithoutGeo = copyWithoutGeo(eventMapWithGeo)
 
 var unstructMap = map[string]interface{}{"unstruct_event_com_snowplowanalytics_snowplow_link_click_1": eventMapWithGeo["unstruct_event_com_snowplowanalytics_snowplow_link_click_1"]}
 
-var contextsMap = []map[string]interface{}{{"breadcrumb[0]": "blog"}}
+var contextsArray = []interface{}{"blog"}
 
-var wholeContextMap = []map[string]interface{}{{"author": "Fred Blundun", "breadcrumb": []interface{}{"blog", "releases"}, "datePublished": "2014-11-06T00:00:00Z", "genre": "blog", "inLanguage": "en-US", "keywords": []interface{}{"snowplow", "javascript", "tracker", "event"}}}
+var multipleContextsMap = map[string]interface{}{"contexts_org_schema_web_page_1": []interface{}{map[string]interface{}{"author": "Fred Blundun", "breadcrumb": []interface{}{"blog", "releases"}, "datePublished": "2014-11-06T00:00:00Z", "genre": "blog", "inLanguage": "en-US", "keywords": []interface{}{"snowplow", "javascript", "tracker", "event"}}}, "contexts_org_w3_performance_timing_1": []interface{}{map[string]interface{}{"connectEnd": 1.415358090183e+12, "connectStart": 1.415358090103e+12, "domComplete": 0.0, "domContentLoadedEventEnd": 1.415358091309e+12, "domContentLoadedEventStart": 1.415358090968e+12, "domInteractive": 1.415358090886e+12, "domLoading": 1.41535809027e+12, "domainLookupEnd": 1.415358090102e+12, "domainLookupStart": 1.415358090102e+12, "fetchStart": 1.41535808987e+12, "loadEventEnd": 0.0, "loadEventStart": 0.0, "navigationStart": 1.415358089861e+12, "redirectEnd": 0.0, "redirectStart": 0.0, "requestStart": 1.415358090183e+12, "responseEnd": 1.415358090265e+12, "responseStart": 1.415358090265e+12, "unloadEventEnd": 1.415358090287e+12, "unloadEventStart": 1.41535809027e+12}}}
+
+var wholeContextMap = []interface{}{map[string]interface{}{"author": "Fred Blundun", "breadcrumb": []interface{}{"blog", "releases"}, "datePublished": "2014-11-06T00:00:00Z", "genre": "blog", "inLanguage": "en-US", "keywords": []interface{}{"snowplow", "javascript", "tracker", "event"}}}
 
 var subsetMap = map[string]interface{}{
 	"app_id":            eventMapWithGeo["app_id"],

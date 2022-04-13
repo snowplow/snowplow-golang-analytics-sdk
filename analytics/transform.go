@@ -209,36 +209,25 @@ func (event ParsedEvent) GetValue(field string) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if field == "contexts" || field == "derived_contexts" || field == "unstruct_event" {
+		// TODO: DRY HERE TOO?
+		output := make(map[string]interface{})
+		for _, pair := range kvPairs {
+			output[pair.Key] = pair.Value
+		}
+		return output, nil
+	}
+
 	return kvPairs[0].Value, nil
 }
 
 // GetUnstructEventValue returns the value for a provided atomic field inside an event's unstruct_event field
 func (event ParsedEvent) GetUnstructEventValue(path ...interface{}) (interface{}, error) {
-	field := "unstruct_event"
+	fullPath := append([]interface{}{`data`, `data`}, path...)
 
-	kvPairs, err := event.getParsedValue(field)
-	if err != nil {
-		return nil, err
-	}
-
-	// extract the key/value pairs of the event field into a map
-	eventMap := make(map[string]interface{})
-	for _, pair := range kvPairs {
-		eventMap[pair.Key] = pair.Value
-	}
-
-	j, err := json.Marshal(eventMap)
-	if err != nil {
-		return nil, err
-	}
-
-	b := make([]interface{}, len(path))
-	for idx := range path {
-		b[idx] = path[idx]
-	}
-
-	el := json.Get(j, b...)
-	return el.GetInterface(), nil
+	el := json.Get([]byte(event[indexMap["unstruct_event"]]), fullPath...)
+	return el.GetInterface(), el.LastError()
 }
 
 // GetContextValue returns the value for a provided atomic field inside an event's contexts or derived_contexts
@@ -258,7 +247,7 @@ func (event ParsedEvent) GetContextValue(contextName string, path ...interface{}
 		contexts = append(contexts, eventMap)
 	}
 
-	var output []map[string]interface{}
+	var output []interface{}
 	b := make([]interface{}, len(path))
 	for idx := range path {
 		b[idx] = path[idx]
@@ -281,21 +270,7 @@ func (event ParsedEvent) GetContextValue(contextName string, path ...interface{}
 					}
 					el := json.Get(j, b...)
 					if el.LastError() == nil {
-						var parsedPath string
-						for _, p := range path {
-							switch p.(type) {
-							case int:
-								parsedPath += `[` + strconv.Itoa(p.(int)) + `]`
-							case string:
-								parsedPath += `.` + p.(string)
-							default:
-								return nil, errors.New(`Invalid path input`)
-							}
-						}
-
-						output = append(output, map[string]interface{}{
-							parsedPath[1:]: el.GetInterface(),
-						})
+						output = append(output, el.GetInterface())
 					}
 				}
 			}

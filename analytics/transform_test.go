@@ -294,6 +294,16 @@ func TestGetValue(t *testing.T) {
 	assert.Nil(err)
 	assert.Equal("<>angry-birds", appId)
 
+	// correct value unstruct field
+	unstructValue, err := fullEvent.GetValue("unstruct_event")
+	assert.Nil(err)
+	assert.Equal(unstructMap, unstructValue)
+
+	// correct value contexts
+	contextsValue, err := fullEvent.GetValue("contexts")
+	assert.Nil(err)
+	assert.Equal(multipleContextsMap, contextsValue)
+
 	// incorrect field name
 	failureValue, err := fullEvent.GetValue("not_a_field")
 	assert.Nil(failureValue)
@@ -309,11 +319,15 @@ func TestGetUnstructEventValue(t *testing.T) {
 	assert := assert.New(t)
 
 	// correct value unstruct field
-	unstructValue, err := fullEvent.GetUnstructEventValue(`unstruct_event_com_snowplowanalytics_snowplow_link_click_1`, `elementClasses`, 0)
+	unstructValue, err := fullEvent.GetUnstructEventValue(`elementClasses`, 0)
 	assert.Nil(err)
 	assert.Equal(`foreground`, unstructValue)
 
-	unstructValue, err = fullEvent.GetUnstructEventValue(`unstruct_event_com_snowplowanalytics_snowplow_link_click_1`, `elementId`)
+	unstructValue, err = fullEvent.GetUnstructEventValue(`elementClassesBoo`, 0)
+	assert.NotNil(err)
+	assert.Nil(unstructValue)
+
+	unstructValue, err = fullEvent.GetUnstructEventValue(`elementId`)
 	assert.Nil(err)
 	assert.Equal(`exampleLink`, unstructValue)
 }
@@ -324,7 +338,7 @@ func TestGetContextValue(t *testing.T) {
 	// correct value contexts
 	contextsValue, err := fullEvent.GetContextValue(`contexts_org_schema_web_page_1`, "breadcrumb", 0)
 	assert.Nil(err)
-	assert.Equal(contextsMap, contextsValue)
+	assert.Equal(contextsArray, contextsValue)
 
 	// correct value contexts
 	contextsValue, err = fullEvent.GetContextValue(`contexts_org_schema_web_page_1`)
@@ -334,7 +348,7 @@ func TestGetContextValue(t *testing.T) {
 	// correct value contexts
 	contextsValue, err = fullEvent.GetContextValue(`contexts_org_schema_web_page_1`, "breadcrumb", 3)
 	assert.Nil(err)
-	assert.Equal([]map[string]interface{}(nil), contextsValue)
+	assert.Equal([]interface{}(nil), contextsValue)
 }
 
 func BenchmarkGetValue(b *testing.B) {

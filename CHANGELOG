@@ -1,3 +1,9 @@
+Version 0.2.0 (2022-04-27)
+-------------------------
+Extend Get* methods to allow getting fields from self-describing data (#9)
+Update README quickstart example to code that actually runs (#13)
+Add further badges to README (#5)
+
 Version 0.1.0 (2021-05-26)
 --------------------------
 Update json-iterator (#11)
