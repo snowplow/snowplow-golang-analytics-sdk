@@ -19,6 +19,7 @@ import (
 	"strings"
 	"time"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 )
 
@@ -161,7 +162,7 @@ func (event ParsedEvent) ToJson() ([]byte, error) {
 		return nil, err
 	}
 
-	jsonified, err := json.Marshal(mapified)
+	jsonified, err := jsoniter.Marshal(mapified)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error marshaling to JSON")
 	}
@@ -175,7 +176,7 @@ func (event ParsedEvent) ToJsonWithGeo() ([]byte, error) {
 		return nil, err
 	}
 
-	jsonified, err := json.Marshal(mapified)
+	jsonified, err := jsoniter.Marshal(mapified)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error marshaling to JSON")
 	}
@@ -226,7 +227,7 @@ func (event ParsedEvent) GetValue(field string) (interface{}, error) {
 func (event ParsedEvent) GetUnstructEventValue(path ...interface{}) (interface{}, error) {
 	fullPath := append([]interface{}{`data`, `data`}, path...)
 
-	el := json.Get([]byte(event[indexMap["unstruct_event"]]), fullPath...)
+	el := jsoniter.Get([]byte(event[indexMap["unstruct_event"]]), fullPath...)
 	return el.GetInterface(), el.LastError()
 }
 
@@ -264,11 +265,11 @@ func (event ParsedEvent) GetContextValue(contextName string, path ...interface{}
 						output = append(output, ctxValuesMap)
 						continue
 					}
-					j, err := json.Marshal(ctxValuesMap)
+					j, err := jsoniter.Marshal(ctxValuesMap)
 					if err != nil {
 						return nil, err
 					}
-					el := json.Get(j, b...)
+					el := jsoniter.Get(j, b...)
 					if el.LastError() == nil {
 						output = append(output, el.GetInterface())
 					}
@@ -318,7 +319,7 @@ func (event ParsedEvent) GetSubsetJson(fields ...string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	subsetJson, err := json.Marshal(subsetMap)
+	subsetJson, err := jsoniter.Marshal(subsetMap)
 	if err != nil {
 		return nil, err
 	}
