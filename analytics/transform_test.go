@@ -14,9 +14,10 @@
 package analytics
 
 import (
-	stdJson "encoding/json" // Using the std JSON package for expected values
+	"fmt"
 	"testing"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -201,14 +202,12 @@ func BenchmarkMapifyGoodEvent(b *testing.B) {
 func TestToJson(t *testing.T) {
 	assert := assert.New(t)
 
-	// correct value
-	jsonEvent, err := stdJson.Marshal(eventMapWithoutGeo)
-	if err != nil {
-	}
-
 	jsonifiedEvent, err := fullEvent.ToJson()
 	assert.Nil(err)
-	assert.Equal(jsonEvent, jsonifiedEvent)
+
+	jsonifiedEventOrdered, _ := orderJson(jsonifiedEvent)
+
+	assert.Equal(eventMapWithoutGeoJSON, jsonifiedEventOrdered)
 
 	// incorrect input
 	failedJsonify, err := ParsedEvent([]string{"one", "two"}).ToJson()
@@ -222,17 +221,32 @@ func BenchmarkToJson(b *testing.B) {
 	}
 }
 
+// orderJson uses the jsoniter library to remarshal a []byte, resulting in a sorted JSON
+func orderJson(bytes []byte) ([]byte, error) {
+	var ifce interface{}
+	j := jsoniter.Config{SortMapKeys: true}.Froze()
+	err := j.Unmarshal(bytes, &ifce)
+	if err != nil {
+		return []byte{}, err
+	}
+	output, err := j.Marshal(ifce)
+	if err != nil {
+		return []byte{}, err
+	}
+	return output, nil
+}
+
 func TestToJsonWithGeo(t *testing.T) {
 	assert := assert.New(t)
 
-	// correct value
-	jsonEvent, err := stdJson.Marshal(eventMapWithGeo)
-	if err != nil {
-	}
-
 	jsonifiedEvent, err := fullEvent.ToJsonWithGeo()
 	assert.Nil(err)
-	assert.Equal(jsonEvent, jsonifiedEvent)
+
+	fmt.Println(string(jsonifiedEvent))
+
+	jsonifiedEventOrdered, _ := orderJson(jsonifiedEvent)
+
+	assert.Equal(eventMapWithGeoJSON, jsonifiedEventOrdered)
 
 	// incorrect input
 	failedJsonify, err := ParsedEvent([]string{"one", "two"}).ToJsonWithGeo()
@@ -394,12 +408,19 @@ func TestGetSubsetJSON(t *testing.T) {
 
 	// correct value
 	subsetJsonValue, err := fullEvent.GetSubsetJson([]string{"app_id", "br_features_flash", "br_features_pdf", "collector_tstamp", "unstruct_event", "contexts", "derived_contexts"}...)
-	assert.Equal(subsetJson, subsetJsonValue)
+
+	subsetJsonOrdered, _ := orderJson(subsetJson)
+	subsetJsonValueOrdered, _ := orderJson(subsetJsonValue)
+
+	assert.Equal(subsetJsonOrdered, subsetJsonValueOrdered)
 	assert.Nil(err)
 
 	// correct values passing multiple string args
 	subsetJsonValue2, err := fullEvent.GetSubsetJson("app_id", "br_features_flash", "br_features_pdf", "collector_tstamp", "unstruct_event", "contexts", "derived_contexts")
-	assert.Equal(subsetJson, subsetJsonValue2)
+
+	subsetJsonValue2Ordered, _ := orderJson(subsetJsonValue2)
+
+	assert.Equal(subsetJsonOrdered, subsetJsonValue2Ordered)
 	assert.Nil(err)
 
 	// incorrect field name
@@ -408,7 +429,7 @@ func TestGetSubsetJSON(t *testing.T) {
 	assert.NotNil(err)
 
 	// empty value
-	emptyJson, _ := stdJson.Marshal(make(map[string]interface{}))
+	emptyJson, _ := jsoniter.Marshal(make(map[string]interface{}))
 	emptyValue, err := fullEvent.GetSubsetJson("ti_name")
 	assert.Equal(emptyJson, emptyValue)
 	assert.Nil(err)
