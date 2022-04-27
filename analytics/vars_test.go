@@ -14,9 +14,10 @@
 package analytics
 
 import (
-	stdJson "encoding/json"
 	"strings"
 	"time"
+
+	jsoniter "github.com/json-iterator/go"
 )
 
 var ctxt = `{"schema":"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-1","data":[{"schema":"iglu:com.acme/test_context/jsonschema/1-0-0","data":{"field1": 1}}, {"schema":"iglu:com.acme/test_context/jsonschema/1-0-0","data":{"field1": 2}}]}`
@@ -27,7 +28,7 @@ var invalidUnstruct = `{"data":{"data":{"key":"value"},"schema":"fail"},"schema"
 
 var tstampValue, _ = time.Parse("2006-01-02 15:04:05.999", "2013-11-26 00:03:57.885")
 
-var unstructString = `{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.snowplowanalytics.snowplow/link_click/jsonschema/1-0-1","data":{"targetUrl":"http://www.example.com","elementClasses":["foreground"],"elementId":"exampleLink"}}}`
+var unstructString = `{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.snowplowanalytics.snowplow/link_click/jsonschema/1-0-1","data":{"targetUrl":"http://www.example.com","elementClasses":["foreground"],"elementId":"exampleLink","unicodeTest":"<>angry_birds"}}}`
 
 var contextsString = `{"schema":"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0","data":[{"schema":"iglu:org.schema/WebPage/jsonschema/1-0-0","data":{"genre":"blog","inLanguage":"en-US","datePublished":"2014-11-06T00:00:00Z","author":"Fred Blundun","breadcrumb":["blog","releases"],"keywords":["snowplow","javascript","tracker","event"]}},{"schema":"iglu:org.w3/PerformanceTiming/jsonschema/1-0-0","data":{"navigationStart":1415358089861,"unloadEventStart":1415358090270,"unloadEventEnd":1415358090287,"redirectStart":0,"redirectEnd":0,"fetchStart":1415358089870,"domainLookupStart":1415358090102,"domainLookupEnd":1415358090102,"connectStart":1415358090103,"connectEnd":1415358090183,"requestStart":1415358090183,"responseStart":1415358090265,"responseEnd":1415358090265,"domLoading":1415358090270,"domInteractive":1415358090886,"domContentLoadedEventStart":1415358090968,"domContentLoadedEventEnd":1415358091309,"domComplete":0,"loadEventStart":0,"loadEventEnd":0}}]}`
 
@@ -171,6 +172,9 @@ var fullEvent = ParsedEvent([]string{
 // tsv string
 var tsvEvent = strings.Join(fullEvent, "\t")
 
+var eventMapWithGeoJSON = []byte(`{"app_id":"<>angry-birds","br_features_flash":false,"br_features_pdf":true,"collector_tstamp":"2013-11-26T00:03:57.885Z","contexts_com_snowplowanalytics_snowplow_ua_parser_context_1":[{"deviceFamily":"Other","osFamily":"Windows XP","osMajor":null,"osMinor":null,"osPatch":null,"osPatchMinor":null,"osVersion":"Windows XP","useragentFamily":"IE","useragentMajor":"7","useragentMinor":"0","useragentPatch":null,"useragentVersion":"IE 7.0"}],"contexts_org_schema_web_page_1":[{"author":"Fred Blundun","breadcrumb":["blog","releases"],"datePublished":"2014-11-06T00:00:00Z","genre":"blog","inLanguage":"en-US","keywords":["snowplow","javascript","tracker","event"]}],"contexts_org_w3_performance_timing_1":[{"connectEnd":1415358090183,"connectStart":1415358090103,"domComplete":0,"domContentLoadedEventEnd":1415358091309,"domContentLoadedEventStart":1415358090968,"domInteractive":1415358090886,"domLoading":1415358090270,"domainLookupEnd":1415358090102,"domainLookupStart":1415358090102,"fetchStart":1415358089870,"loadEventEnd":0,"loadEventStart":0,"navigationStart":1415358089861,"redirectEnd":0,"redirectStart":0,"requestStart":1415358090183,"responseEnd":1415358090265,"responseStart":1415358090265,"unloadEventEnd":1415358090287,"unloadEventStart":1415358090270}],"derived_tstamp":"2013-11-26T00:03:57.885Z","domain_sessionid":"2b15e5c8-d3b1-11e4-b9d6-1681e6b88ec1","domain_sessionidx":3,"domain_userid":"bc2e92ec6c204a14","dvce_created_tstamp":"2013-11-26T00:03:57.885Z","etl_tstamp":"2013-11-26T00:03:57.885Z","event":"page_view","event_fingerprint":"e3dbfa9cca0412c3d4052863cefb547f","event_format":"jsonschema","event_id":"c6ef3124-b53a-4b13-a233-0088f79dcbcb","event_name":"link_click","event_vendor":"com.snowplowanalytics.snowplow","event_version":"1-0-0","geo_city":"New York","geo_country":"US","geo_latitude":37.443604,"geo_location":"37.443604,-122.4124","geo_longitude":-122.4124,"geo_region":"TX","geo_region_name":"Florida","geo_zipcode":"94109","ip_domain":"nuvox.net","ip_isp":"FDN Communications","ip_netspeed":"Cable/DSL","ip_organization":"Bouygues Telecom","name_tracker":"cloudfront-1","network_userid":"ecdff4d0-9175-40ac-a8bb-325c49733607","page_title":"On Analytics","page_url":"http://www.snowplowanalytics.com","page_urlfragment":"4-conclusion","page_urlhost":"www.snowplowanalytics.com","page_urlpath":"/product/index.html","page_urlport":80,"page_urlquery":"id=GTM-DLRG","page_urlscheme":"http","platform":"web","true_tstamp":"2013-11-26T00:03:57.885Z","txn_id":41828,"unstruct_event_com_snowplowanalytics_snowplow_link_click_1":{"elementClasses":["foreground"],"elementId":"exampleLink","targetUrl":"http://www.example.com","unicodeTest":"<>angry_birds"},"user_fingerprint":"2161814971","user_id":"jon.doe@email.com","user_ipaddress":"92.231.54.234","v_collector":"clj-tomcat-0.1.0","v_etl":"serde-0.5.2","v_tracker":"js-2.1.0"}`)
+var eventMapWithoutGeoJSON = []byte(`{"app_id":"<>angry-birds","br_features_flash":false,"br_features_pdf":true,"collector_tstamp":"2013-11-26T00:03:57.885Z","contexts_com_snowplowanalytics_snowplow_ua_parser_context_1":[{"deviceFamily":"Other","osFamily":"Windows XP","osMajor":null,"osMinor":null,"osPatch":null,"osPatchMinor":null,"osVersion":"Windows XP","useragentFamily":"IE","useragentMajor":"7","useragentMinor":"0","useragentPatch":null,"useragentVersion":"IE 7.0"}],"contexts_org_schema_web_page_1":[{"author":"Fred Blundun","breadcrumb":["blog","releases"],"datePublished":"2014-11-06T00:00:00Z","genre":"blog","inLanguage":"en-US","keywords":["snowplow","javascript","tracker","event"]}],"contexts_org_w3_performance_timing_1":[{"connectEnd":1415358090183,"connectStart":1415358090103,"domComplete":0,"domContentLoadedEventEnd":1415358091309,"domContentLoadedEventStart":1415358090968,"domInteractive":1415358090886,"domLoading":1415358090270,"domainLookupEnd":1415358090102,"domainLookupStart":1415358090102,"fetchStart":1415358089870,"loadEventEnd":0,"loadEventStart":0,"navigationStart":1415358089861,"redirectEnd":0,"redirectStart":0,"requestStart":1415358090183,"responseEnd":1415358090265,"responseStart":1415358090265,"unloadEventEnd":1415358090287,"unloadEventStart":1415358090270}],"derived_tstamp":"2013-11-26T00:03:57.885Z","domain_sessionid":"2b15e5c8-d3b1-11e4-b9d6-1681e6b88ec1","domain_sessionidx":3,"domain_userid":"bc2e92ec6c204a14","dvce_created_tstamp":"2013-11-26T00:03:57.885Z","etl_tstamp":"2013-11-26T00:03:57.885Z","event":"page_view","event_fingerprint":"e3dbfa9cca0412c3d4052863cefb547f","event_format":"jsonschema","event_id":"c6ef3124-b53a-4b13-a233-0088f79dcbcb","event_name":"link_click","event_vendor":"com.snowplowanalytics.snowplow","event_version":"1-0-0","geo_city":"New York","geo_country":"US","geo_latitude":37.443604,"geo_longitude":-122.4124,"geo_region":"TX","geo_region_name":"Florida","geo_zipcode":"94109","ip_domain":"nuvox.net","ip_isp":"FDN Communications","ip_netspeed":"Cable/DSL","ip_organization":"Bouygues Telecom","name_tracker":"cloudfront-1","network_userid":"ecdff4d0-9175-40ac-a8bb-325c49733607","page_title":"On Analytics","page_url":"http://www.snowplowanalytics.com","page_urlfragment":"4-conclusion","page_urlhost":"www.snowplowanalytics.com","page_urlpath":"/product/index.html","page_urlport":80,"page_urlquery":"id=GTM-DLRG","page_urlscheme":"http","platform":"web","true_tstamp":"2013-11-26T00:03:57.885Z","txn_id":41828,"unstruct_event_com_snowplowanalytics_snowplow_link_click_1":{"elementClasses":["foreground"],"elementId":"exampleLink","targetUrl":"http://www.example.com","unicodeTest":"<>angry_birds"},"user_fingerprint":"2161814971","user_id":"jon.doe@email.com","user_ipaddress":"92.231.54.234","v_collector":"clj-tomcat-0.1.0","v_etl":"serde-0.5.2","v_tracker":"js-2.1.0"}`)
+
 var eventMapWithGeo = map[string]interface{}{
 	"app_id":            "<>angry-birds",
 	"br_features_flash": false,
@@ -262,6 +266,7 @@ var eventMapWithGeo = map[string]interface{}{
 		"elementClasses": []interface{}{"foreground"},
 		"elementId":      "exampleLink",
 		"targetUrl":      "http://www.example.com",
+		"unicodeTest":    "<>angry_birds",
 	},
 	"user_fingerprint": "2161814971",
 	"user_id":          "jon.doe@email.com",
@@ -302,4 +307,4 @@ var subsetMap = map[string]interface{}{
 	"contexts_com_snowplowanalytics_snowplow_ua_parser_context_1": eventMapWithGeo["contexts_com_snowplowanalytics_snowplow_ua_parser_context_1"],
 }
 
-var subsetJson, _ = stdJson.Marshal(subsetMap)
+var subsetJson, _ = jsoniter.Marshal(subsetMap)

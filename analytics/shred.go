@@ -15,16 +15,13 @@ package analytics
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"regexp"
 	"strings"
 	"unicode" // For camel to snake case - consider alternative?
 
 	jsoniter "github.com/json-iterator/go"
-	"github.com/pkg/errors"
 )
-
-var ConfigCompatibleWithStandardLibrary = jsoniter.Config{EscapeHTML: false}
-var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 type SelfDescribingData struct {
 	Schema string
@@ -103,7 +100,7 @@ func fixSchema(prefix string, schemaUri string) (string, error) {
 func shredContexts(contexts string) ([]KeyVal, error) {
 	ctxts := Contexts{}
 
-	err := json.Unmarshal([]byte(contexts), &ctxts)
+	err := jsoniter.Unmarshal([]byte(contexts), &ctxts)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error unmarshaling context JSON")
 	}
@@ -137,7 +134,7 @@ func shredUnstruct(unstruct string) ([]KeyVal, error) {
 
 	event := UnstructEvent{}
 
-	err := json.Unmarshal([]byte(unstruct), &event)
+	err := jsoniter.Unmarshal([]byte(unstruct), &event)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error unmarshaling unstruct event JSON")
 	}

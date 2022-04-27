@@ -19,6 +19,7 @@ import (
 	"strings"
 	"time"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 )
 
@@ -26,6 +27,8 @@ const (
 	eventLength   int    = 131
 	EmptyFieldErr string = `Field is empty`
 )
+
+var json = jsoniter.Config{}.Froze()
 
 type KeyVal struct {
 	Key   string
