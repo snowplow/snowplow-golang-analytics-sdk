@@ -157,6 +157,21 @@ func (event ParsedEvent) ToMapWithGeo() (map[string]interface{}, error)
 
 ToMapWithGeo adds the geo_location field, and transforms a valid Snowplow ParsedEvent to a Go map.
 
+```go
+func (event ParsedEvent) GetUnstructEventValue(path ...interface{}) (interface{}, error) {
+```
+
+GetUnstructEventValue gets a value from a parsed event's unstruct_event using it's path (`example1[0].example2`).
+
+```go
+func (event ParsedEvent) GetContextValue(contextName string, path ...interface{}) (interface{}, error) {
+```
+
+GetContextValue gets a value from a parsed event's contexts using it's path (`contexts_example_1.example[0]`)
+
+### Note
+Version 0.2.1 should be used instead of version 0.2.0.
+
 ## Copyright and license
 
 Snowplow Golang Analytics SDK is copyright 2021 Snowplow Analytics Ltd.
