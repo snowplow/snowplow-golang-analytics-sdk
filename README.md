@@ -6,6 +6,9 @@
 
 Snowplow is a scalable open-source platform for rich, high quality, low-latency data collection. It is designed to collect high quality, complete behavioural data for enterprise business.
 
+## Note
+Due to issues in the release process, v0.2.2 should be used in favour of v0.2.0 or v0.2.1.
+
 ## Snowplow Pipeline Overview
 
 ![snowplow-pipeline](media/snowplow_architecture.png)
@@ -168,10 +171,6 @@ func (event ParsedEvent) GetContextValue(contextName string, path ...interface{}
 ```
 
 GetContextValue gets a value from a parsed event's contexts using it's path (`contexts_example_1.example[0]`)
-
-### Note
-Version 0.2.1 should be used instead of version 0.2.0.
-
 ## Copyright and license
 
 Snowplow Golang Analytics SDK is copyright 2021 Snowplow Analytics Ltd.
