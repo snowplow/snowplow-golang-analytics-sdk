@@ -1,0 +1,48 @@
+name: Prerelease Package
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'The prerelease tag'
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-20.04
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Validate input
+        run: |
+          if ! [[ ${{ github.event.inputs.version }} =~ v[0-9]+\.[0-9]+\.[0-9]+-.+ ]]; then
+            echo "Tag doesn't match prerelease tag format (vX.X.X-x)"
+            exit 1
+          fi
+
+      - name: Fail if version mismatch
+        run: |
+          if ! [[ ${{ github.event.inputs.version }} == "v$(cat VERSION)" ]]; then
+            echo "Tag doesn't match VERSION file v$(cat VERSION)"
+            exit 1
+          fi
+
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.15'
+
+      - name: Test
+        run: go test ./analytics
+
+      - name: authenticate git
+        uses: oleksiyrudenko/gha-git-credentials@v2-latest
+        with:
+          token: '${{ secrets.GITHUB_TOKEN }}'
+
+      - name: Add tag
+        run: |
+          git tag ${{ github.event.inputs.version }}
+          git push --tags
