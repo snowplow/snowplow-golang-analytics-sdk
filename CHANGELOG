@@ -1,3 +1,10 @@
+Version 0.3.0 (2022-06-03)
+--------------------------
+Bump Go version in GH actions (#30)
+Bump dependencies (#32)
+Ensure unicode characters are interpreted as desired (#20)
+Add Snyk scanning (#25)
+
 Maintenance release (2022-05-18)
 --------------------------------
 Introduce safer release process (#27)
