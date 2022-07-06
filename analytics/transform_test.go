@@ -326,6 +326,14 @@ func TestGetValue(t *testing.T) {
 	assert.NotNil(err)
 }
 
+func BenchmarkGetValue(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		fullEvent.GetValue("app_id")
+		fullEvent.GetValue("contexts")
+		fullEvent.GetValue("unstruct_event") // Calling it three times to ensure benchmark includes both simple and complex data
+	}
+}
+
 func TestGetUnstructEventValue(t *testing.T) {
 	assert := assert.New(t)
 
@@ -366,11 +374,11 @@ func TestGetContextValue(t *testing.T) {
 	assert.Equal([]interface{}(nil), contextsValue)
 }
 
-func BenchmarkGetValue(b *testing.B) {
+func BenchmarkGetContextValue(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		fullEvent.GetValue("app_id")
-		fullEvent.GetValue("contexts")
-		fullEvent.GetValue("unstruct_event") // Calling it three times to ensure benchmark includes both simple and complex data
+		fullEvent.GetContextValue(`contexts_org_schema_web_page_1`, "breadcrumb", 0)
+		fullEvent.GetContextValue("contexts_org_schema_web_page_1")
+		fullEvent.GetContextValue(`contexts_org_schema_web_page_1`, "breadcrumb", 3)
 	}
 }
 
