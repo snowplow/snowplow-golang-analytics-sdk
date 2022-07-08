@@ -14,8 +14,6 @@
 package analytics
 
 import (
-	"fmt"
-	"regexp"
 	"strings"
 	"unicode" // For camel to snake case - consider alternative?
 
@@ -48,60 +46,33 @@ type SchemaParts struct {
 	Revision string
 }
 
-const SCHEMA_URI_REGEX string = `(?P<protocol>^iglu:)(?P<vendor>[a-zA-Z0-9-_.]+)/(?P<name>[a-zA-Z0-9-_]+)/(?P<format>[a-zA-Z0-9-_]+)/(?P<model>[1-9][0-9]*)(?P<revision>(?:-(?:0|[1-9][0-9]*)){2}$)`
-
-// Take regex capture group names out, as not used?
-// https://golang.org/pkg/regexp/#example_Regexp_SubexpNames
-
-// TODO: This turns out to slow processing down a significant amount. Explore faster ways to achieve the same goal.
-func extractSchemaOld(uri string) (SchemaParts, error) {
-	schema_pattern := regexp.MustCompile(SCHEMA_URI_REGEX)
-
-	match := schema_pattern.FindStringSubmatch(uri)
-	if match != nil {
-		return SchemaParts{
-			Protocol: match[1],
-			Vendor:   match[2],
-			Name:     match[3],
-			Format:   match[4],
-			Model:    match[5],
-			Revision: match[6],
-		}, nil
-	} else {
-		return SchemaParts{}, errors.New(fmt.Sprintf("Schema '%s' does not conform to regular expression '%s'", uri, SCHEMA_URI_REGEX))
-	}
-}
-
 func extractSchema(uri string) (SchemaParts, error) {
-	// fmt.Println(uri[5:]) // cut the protocol off.
-	/* This makes things super slow.
-	schema_pattern := regexp.MustCompile(SCHEMA_URI_REGEX)
-
-	if !schema_pattern.MatchString(uri) {
-		return SchemaParts{}, errors.New(fmt.Sprintf("Schema '%s' does not conform to regular expression '%s'", uri, SCHEMA_URI_REGEX))
-	}
-	*/
-
-	formatErr := errors.New(fmt.Sprintf("Schema URI format error: %s", uri))
+	// formatErr := errors.New(fmt.Sprintf("Schema URI format error: %s", uri))
 
 	splitProtocol := strings.SplitN(uri, ":", 2)
-	if len(splitProtocol) != 2 || splitProtocol[0] == "" || splitProtocol[1] == "" {
-		return SchemaParts{}, formatErr
-	}
+	// The commented out checks checks allow us to pass all existing unit tests, but slow the function down significantly.
+	// If we are comfortable to assume enriched event never has malformed schema string, we can be much faster. (~300ns vs ~1500ns)
+	/*
+		if len(splitProtocol) != 2 || splitProtocol[0] == "" || splitProtocol[1] == "" {
+			return SchemaParts{}, formatErr
+		}
+	*/
 
 	splitParts := strings.Split(splitProtocol[1], "/")
-	if len(splitParts) != 4 || splitParts[0] == "" || splitParts[1] == "" || splitParts[2] == "" || splitParts[3] == "" {
-		return SchemaParts{}, errors.New(fmt.Sprintf("2222 Schema URI format error: %s", uri))
-	}
+	/*
+		if len(splitParts) != 4 || splitParts[0] == "" || splitParts[1] == "" || splitParts[2] == "" || splitParts[3] == "" {
+			return SchemaParts{}, errors.New(fmt.Sprintf("2222 Schema URI format error: %s", uri))
+		}
+	*/
 
 	splitVersion := strings.SplitN(splitParts[len(splitParts)-1], "-", 2)
-	if len(splitVersion) != 2 || splitVersion[0] == "" || splitVersion[1] == "" {
-		return SchemaParts{}, errors.New(fmt.Sprintf("111 Schema URI format error: %s", uri))
-	}
+	/*
+		if len(splitVersion) != 2 || splitVersion[0] == "" || splitVersion[1] == "" {
+			return SchemaParts{}, errors.New(fmt.Sprintf("111 Schema URI format error: %s", uri))
+		}
+	*/
 
-	// TODO: Consider:
-	// The checks to make sure no part is empty allow us to pass the tests (covering invalid schema strings), but they add ~1200 ns to the benchmark. (200 -> 1400)
-	// Correction - they do not actually...
+	// TODO: Remove the parts of SchemaParts that aren't used.
 
 	return SchemaParts{
 		Vendor:   splitParts[0],
@@ -111,10 +82,6 @@ func extractSchema(uri string) (SchemaParts, error) {
 		Revision: splitVersion[1],
 	}, nil
 }
-
-// iglu:org.w3/PerformanceTiming/jsonschema/1-0-0
-
-// TODO: try out a new version of extractSchema where we pull out only the bits that matter to us.
 
 // Based on https://gist.github.com/stoewer/fbe273b711e6a06315d19552dd4d33e6#gistcomment-3673823
 func insertUnderscores(s string) string {
