@@ -38,9 +38,9 @@ func TestExtractSchema(t *testing.T) {
 	// assert.Zero(invalidSchemaParts.Protocol)
 	assert.Zero(invalidSchemaParts.Vendor)
 	assert.Zero(invalidSchemaParts.Name)
-	assert.Zero(invalidSchemaParts.Format)
+	// assert.Zero(invalidSchemaParts.Format)
 	assert.Zero(invalidSchemaParts.Model)
-	assert.Zero(invalidSchemaParts.Revision)
+	// assert.Zero(invalidSchemaParts.Revision)
 }
 
 func BenchmarkExtractSchema(b *testing.B) {
@@ -54,52 +54,51 @@ func BenchmarkExtractSchema(b *testing.B) {
 OLD:
 
 cpu: Intel(R) Core(TM) i7-6820HQ CPU @ 2.70GHz
-BenchmarkExtractSchema-8       	   88786	     13298 ns/op
-BenchmarkInsertUnderscores-8   	 3399079	       350.9 ns/op
-BenchmarkFixSchema-8           	   87328	     13561 ns/op
-BenchmarkShredContexts-8       	   39430	     30701 ns/op
-BenchmarkShredUnstruct-8       	   76174	     15624 ns/op
-BenchmarkParseTime-8           	 3615818	       338.0 ns/op
-BenchmarkParseString-8         	17033172	        68.20 ns/op
-BenchmarkParseInt-8            	25019544	        45.76 ns/op
-BenchmarkParseBool-8           	25588480	        45.65 ns/op
-BenchmarkParseDouble-8         	10564029	       111.8 ns/op
-BenchmarkParseEvent-8          	  547250	      2098 ns/op
-BenchmarkMapifyGoodEvent-8     	   12790	     93939 ns/op
-BenchmarkToJson-8              	    9728	    117682 ns/op
-BenchmarkToJsonWithGeo-8       	    9694	    116504 ns/op
-BenchmarkToMap-8               	   12445	     97730 ns/op
-BenchmarkToMapWithGeo-8        	   12766	     94113 ns/op
-BenchmarkGetValue-8            	   20223	     59082 ns/op
-BenchmarkGetContextValue-8     	   14071	     85239 ns/op		<--- This skips the method in question
-BenchmarkGetSubsetMap-8        	   19278	     61060 ns/op
-BenchmarkGetSubsetJson-8       	   16923	     70643 ns/op
+BenchmarkExtractSchema-8       	   86869	     13341 ns/op
+BenchmarkInsertUnderscores-8   	 3446166	       357.9 ns/op
+BenchmarkFixSchema-8           	   86626	     13806 ns/op
+BenchmarkShredContexts-8       	   39648	     31612 ns/op
+BenchmarkShredUnstruct-8       	   73705	     17359 ns/op
+BenchmarkParseTime-8           	 3561141	       334.0 ns/op
+BenchmarkParseString-8         	16929358	        72.46 ns/op
+BenchmarkParseInt-8            	24347121	        46.27 ns/op
+BenchmarkParseBool-8           	25356945	        45.39 ns/op
+BenchmarkParseDouble-8         	10472491	       112.9 ns/op
+BenchmarkParseEvent-8          	  546532	      2101 ns/op
+BenchmarkMapifyGoodEvent-8     	   12667	     94598 ns/op
+BenchmarkToJson-8              	    8798	    119410 ns/op
+BenchmarkToJsonWithGeo-8       	    8554	    117259 ns/op
+BenchmarkToMap-8               	   12602	     94751 ns/op
+BenchmarkToMapWithGeo-8        	   12058	     95363 ns/op
+BenchmarkGetValue-8            	   19915	     60175 ns/op
+BenchmarkGetContextValue-8     	    5587	    204312 ns/op
+BenchmarkGetSubsetMap-8        	   19491	     62871 ns/op
+BenchmarkGetSubsetJson-8       	   16533	     73319 ns/op
 
 
 NEW:
 
 cpu: Intel(R) Core(TM) i7-6820HQ CPU @ 2.70GHz
-BenchmarkExtractSchema-8        	  685042	      1472 ns/op			<--- ~10x faster.
-BenchmarkInsertUnderscores-8    	 3458832	       344.9 ns/op
-BenchmarkFixSchema-8            	  573596	      2016 ns/op			<--- ~6x faster
-BenchmarkShredContexts-8        	  161252	      6994 ns/op			<--- ~5x faster
-BenchmarkShredUnstruct-8        	  313735	      3602 ns/op			<--- ~5x faster
-BenchmarkParseTime-8            	 3613819	       330.8 ns/op
-BenchmarkParseString-8          	16938556	        67.77 ns/op
-BenchmarkParseInt-8             	24495948	        46.64 ns/op
-BenchmarkParseBool-8            	25445799	        45.06 ns/op
-BenchmarkParseDouble-8          	10555526	       111.1 ns/op
-BenchmarkParseEvent-8           	  555231	      2087 ns/op
-BenchmarkMapifyGoodEvent-8      	   27151	     48086 ns/op			<--- ~2x faster
-BenchmarkToJson-8               	   18259	     64889 ns/op			<--- almost ~2x faster
-BenchmarkToJsonWithGeo-8        	   18312	     65923 ns/op			<--- almost ~2x faster
-BenchmarkToMap-8                	   27051	     44321 ns/op			<--- ~2x faster
-BenchmarkToMapWithGeo-8         	   26786	     44458 ns/op			<--- ~2x faster
-BenchmarkGetValue-8             	   50256	     23802 ns/op			<--- ~2x faster
-BenchmarkGetContextValue-8      	   14200	     84536 ns/op		<----- Borh old and new are faster now
-BenchmarkGetContextValueOld-8   	   13342	     89937 ns/op		<----- New way of doing this function looks no better, but both improved vastly with improved extractSchema.
-BenchmarkGetSubsetMap-8         	   47990	     24658 ns/op			<--- ~3x faster
-BenchmarkGetSubsetJson-8        	   35016	     33774 ns/op			<--- ~2x faster
+BenchmarkExtractSchema-8       	 4332684	       272.7 ns/op
+BenchmarkInsertUnderscores-8   	 3284797	       389.5 ns/op
+BenchmarkFixSchema-8           	 1671493	       694.3 ns/op
+BenchmarkShredContexts-8       	  288291	      3972 ns/op
+BenchmarkShredUnstruct-8       	  545361	      2054 ns/op
+BenchmarkParseTime-8           	 3555187	       333.7 ns/op
+BenchmarkParseString-8         	16901078	        68.76 ns/op
+BenchmarkParseInt-8            	23274674	        46.61 ns/op
+BenchmarkParseBool-8           	25224981	        45.48 ns/op
+BenchmarkParseDouble-8         	10314085	       112.0 ns/op
+BenchmarkParseEvent-8          	  529095	      2115 ns/op
+BenchmarkMapifyGoodEvent-8     	   32546	     36509 ns/op
+BenchmarkToJson-8              	   21270	     56620 ns/op
+BenchmarkToJsonWithGeo-8       	   20989	     56835 ns/op
+BenchmarkToMap-8               	   32090	     41841 ns/op
+BenchmarkToMapWithGeo-8        	   32259	     36981 ns/op
+BenchmarkGetValue-8            	   65144	     18124 ns/op
+BenchmarkGetContextValue-8     	   16526	     72281 ns/op
+BenchmarkGetSubsetMap-8        	   62479	     18903 ns/op
+BenchmarkGetSubsetJson-8       	   42502	     27752 ns/op
 */
 
 func TestInsertUnderscores(t *testing.T) {

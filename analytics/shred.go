@@ -38,12 +38,9 @@ type UnstructEvent struct {
 }
 
 type SchemaParts struct {
-	Protocol string
-	Vendor   string
-	Name     string
-	Format   string
-	Model    string
-	Revision string
+	Vendor string
+	Name   string
+	Model  string
 }
 
 func extractSchema(uri string) (SchemaParts, error) {
@@ -75,11 +72,9 @@ func extractSchema(uri string) (SchemaParts, error) {
 	// TODO: Remove the parts of SchemaParts that aren't used.
 
 	return SchemaParts{
-		Vendor:   splitParts[0],
-		Name:     splitParts[1],
-		Format:   splitParts[2],
-		Model:    splitVersion[0],
-		Revision: splitVersion[1],
+		Vendor: splitParts[0],
+		Name:   splitParts[1],
+		Model:  splitVersion[0],
 	}, nil
 }
 
