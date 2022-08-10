@@ -14,6 +14,7 @@
 package analytics
 
 import (
+	"fmt"
 	"strings"
 	"unicode" // For camel to snake case - consider alternative?
 
@@ -44,30 +45,22 @@ type SchemaParts struct {
 }
 
 func extractSchema(uri string) (SchemaParts, error) {
-	// formatErr := errors.New(fmt.Sprintf("Schema URI format error: %s", uri))
+	formatErr := errors.New(fmt.Sprintf("Schema URI format error: %s", uri))
 
 	splitProtocol := strings.SplitN(uri, ":", 2)
-	// The commented out checks checks allow us to pass all existing unit tests, but slow the function down significantly.
-	// If we are comfortable to assume enriched event never has malformed schema string, we can be much faster. (~300ns vs ~1500ns)
-	/*
-		if len(splitProtocol) != 2 || splitProtocol[0] == "" || splitProtocol[1] == "" {
-			return SchemaParts{}, formatErr
-		}
-	*/
+	if len(splitProtocol) != 2 || splitProtocol[0] == "" || splitProtocol[1] == "" {
+		return SchemaParts{}, formatErr
+	}
 
 	splitParts := strings.Split(splitProtocol[1], "/")
-	/*
-		if len(splitParts) != 4 || splitParts[0] == "" || splitParts[1] == "" || splitParts[2] == "" || splitParts[3] == "" {
-			return SchemaParts{}, errors.New(fmt.Sprintf("2222 Schema URI format error: %s", uri))
-		}
-	*/
+	if len(splitParts) != 4 || splitParts[0] == "" || splitParts[1] == "" || splitParts[2] == "" || splitParts[3] == "" {
+		return SchemaParts{}, errors.New(fmt.Sprintf("2222 Schema URI format error: %s", uri))
+	}
 
 	splitVersion := strings.SplitN(splitParts[len(splitParts)-1], "-", 2)
-	/*
-		if len(splitVersion) != 2 || splitVersion[0] == "" || splitVersion[1] == "" {
-			return SchemaParts{}, errors.New(fmt.Sprintf("111 Schema URI format error: %s", uri))
-		}
-	*/
+	if len(splitVersion) != 2 || splitVersion[0] == "" || splitVersion[1] == "" {
+		return SchemaParts{}, errors.New(fmt.Sprintf("111 Schema URI format error: %s", uri))
+	}
 
 	return SchemaParts{
 		Vendor: splitParts[0],

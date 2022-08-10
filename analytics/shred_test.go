@@ -32,17 +32,16 @@ func TestExtractSchema(t *testing.T) {
 	assert.Equal("15", schemaParts.Model)
 	// assert.Equal("-34-1", schemaParts.Revision)
 
-	/*
-		// invalid schema path
-		invalidSchemaParts, err := extractSchema("com.acme.notvalid/invalidschemapath/jsonschema/1.0.0")
-		assert.NotNil(err)
-		// assert.Zero(invalidSchemaParts.Protocol)
-		assert.Zero(invalidSchemaParts.Vendor)
-		assert.Zero(invalidSchemaParts.Name)
-		// assert.Zero(invalidSchemaParts.Format)
-		assert.Zero(invalidSchemaParts.Model)
-		// assert.Zero(invalidSchemaParts.Revision)
-	*/
+	// invalid schema path
+	invalidSchemaParts, err := extractSchema("com.acme.notvalid/invalidschemapath/jsonschema/1.0.0")
+	assert.NotNil(err)
+	// assert.Zero(invalidSchemaParts.Protocol)
+	assert.Zero(invalidSchemaParts.Vendor)
+	assert.Zero(invalidSchemaParts.Name)
+	// assert.Zero(invalidSchemaParts.Format)
+	assert.Zero(invalidSchemaParts.Model)
+	// assert.Zero(invalidSchemaParts.Revision)
+
 }
 
 func BenchmarkExtractSchema(b *testing.B) {
@@ -157,6 +156,7 @@ func TestShredContexts(t *testing.T) {
 	failedShred, err := shredContexts(invalidCtxt)
 	assert.NotNil(err)
 	assert.Nil(failedShred)
+
 }
 
 func BenchmarkShredContexts(b *testing.B) {
