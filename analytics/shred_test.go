@@ -50,58 +50,6 @@ func BenchmarkExtractSchema(b *testing.B) {
 	}
 }
 
-/*
-
-OLD:
-
-cpu: Intel(R) Core(TM) i7-6820HQ CPU @ 2.70GHz
-BenchmarkExtractSchema-8       	   86869	     13341 ns/op
-BenchmarkInsertUnderscores-8   	 3446166	       357.9 ns/op
-BenchmarkFixSchema-8           	   86626	     13806 ns/op
-BenchmarkShredContexts-8       	   39648	     31612 ns/op
-BenchmarkShredUnstruct-8       	   73705	     17359 ns/op
-BenchmarkParseTime-8           	 3561141	       334.0 ns/op
-BenchmarkParseString-8         	16929358	        72.46 ns/op
-BenchmarkParseInt-8            	24347121	        46.27 ns/op
-BenchmarkParseBool-8           	25356945	        45.39 ns/op
-BenchmarkParseDouble-8         	10472491	       112.9 ns/op
-BenchmarkParseEvent-8          	  546532	      2101 ns/op
-BenchmarkMapifyGoodEvent-8     	   12667	     94598 ns/op
-BenchmarkToJson-8              	    8798	    119410 ns/op
-BenchmarkToJsonWithGeo-8       	    8554	    117259 ns/op
-BenchmarkToMap-8               	   12602	     94751 ns/op
-BenchmarkToMapWithGeo-8        	   12058	     95363 ns/op
-BenchmarkGetValue-8            	   19915	     60175 ns/op
-BenchmarkGetContextValue-8     	    5587	    204312 ns/op
-BenchmarkGetSubsetMap-8        	   19491	     62871 ns/op
-BenchmarkGetSubsetJson-8       	   16533	     73319 ns/op
-
-
-NEW:
-
-cpu: Intel(R) Core(TM) i7-6820HQ CPU @ 2.70GHz
-BenchmarkExtractSchema-8       	 4332684	       272.7 ns/op
-BenchmarkInsertUnderscores-8   	 3284797	       389.5 ns/op
-BenchmarkFixSchema-8           	 1671493	       694.3 ns/op
-BenchmarkShredContexts-8       	  288291	      3972 ns/op
-BenchmarkShredUnstruct-8       	  545361	      2054 ns/op
-BenchmarkParseTime-8           	 3555187	       333.7 ns/op
-BenchmarkParseString-8         	16901078	        68.76 ns/op
-BenchmarkParseInt-8            	23274674	        46.61 ns/op
-BenchmarkParseBool-8           	25224981	        45.48 ns/op
-BenchmarkParseDouble-8         	10314085	       112.0 ns/op
-BenchmarkParseEvent-8          	  529095	      2115 ns/op
-BenchmarkMapifyGoodEvent-8     	   32546	     36509 ns/op
-BenchmarkToJson-8              	   21270	     56620 ns/op
-BenchmarkToJsonWithGeo-8       	   20989	     56835 ns/op
-BenchmarkToMap-8               	   32090	     41841 ns/op
-BenchmarkToMapWithGeo-8        	   32259	     36981 ns/op
-BenchmarkGetValue-8            	   65144	     18124 ns/op
-BenchmarkGetContextValue-8     	   16526	     72281 ns/op
-BenchmarkGetSubsetMap-8        	   62479	     18903 ns/op
-BenchmarkGetSubsetJson-8       	   42502	     27752 ns/op
-*/
-
 func TestInsertUnderscores(t *testing.T) {
 	assert := assert.New(t)
 
