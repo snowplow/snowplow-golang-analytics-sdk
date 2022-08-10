@@ -69,8 +69,6 @@ func extractSchema(uri string) (SchemaParts, error) {
 		}
 	*/
 
-	// TODO: Remove the parts of SchemaParts that aren't used.
-
 	return SchemaParts{
 		Vendor: splitParts[0],
 		Name:   splitParts[1],
