@@ -15,10 +15,10 @@ package analytics
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
-	"regexp"
 	"strings"
 	"unicode" // For camel to snake case - consider alternative?
+
+	"github.com/pkg/errors"
 
 	jsoniter "github.com/json-iterator/go"
 )
@@ -39,36 +39,34 @@ type UnstructEvent struct {
 }
 
 type SchemaParts struct {
-	Protocol string
-	Vendor   string
-	Name     string
-	Format   string
-	Model    string
-	Revision string
+	Vendor string
+	Name   string
+	Model  string
 }
 
-const SCHEMA_URI_REGEX string = `(?P<protocol>^iglu:)(?P<vendor>[a-zA-Z0-9-_.]+)/(?P<name>[a-zA-Z0-9-_]+)/(?P<format>[a-zA-Z0-9-_]+)/(?P<model>[1-9][0-9]*)(?P<revision>(?:-(?:0|[1-9][0-9]*)){2}$)`
-
-// Take regex capture group names out, as not used?
-// https://golang.org/pkg/regexp/#example_Regexp_SubexpNames
-
 func extractSchema(uri string) (SchemaParts, error) {
-	schema_pattern := regexp.MustCompile(SCHEMA_URI_REGEX)
+	formatErr := errors.New(fmt.Sprintf("Schema URI format error: %s", uri))
 
-	match := schema_pattern.FindStringSubmatch(uri)
-	if match != nil {
-		return SchemaParts{
-			Protocol: match[1],
-			Vendor:   match[2],
-			Name:     match[3],
-			Format:   match[4],
-			Model:    match[5],
-			Revision: match[6],
-		}, nil
-	} else {
-		return SchemaParts{}, errors.New(fmt.Sprintf("Schema '%s' does not conform to regular expression '%s'", uri, SCHEMA_URI_REGEX))
+	splitProtocol := strings.SplitN(uri, ":", 2)
+	if len(splitProtocol) != 2 || splitProtocol[0] == "" || splitProtocol[1] == "" {
+		return SchemaParts{}, formatErr
 	}
 
+	splitParts := strings.Split(splitProtocol[1], "/")
+	if len(splitParts) != 4 || splitParts[0] == "" || splitParts[1] == "" || splitParts[2] == "" || splitParts[3] == "" {
+		return SchemaParts{}, errors.New(fmt.Sprintf("2222 Schema URI format error: %s", uri))
+	}
+
+	splitVersion := strings.SplitN(splitParts[len(splitParts)-1], "-", 2)
+	if len(splitVersion) != 2 || splitVersion[0] == "" || splitVersion[1] == "" {
+		return SchemaParts{}, errors.New(fmt.Sprintf("111 Schema URI format error: %s", uri))
+	}
+
+	return SchemaParts{
+		Vendor: splitParts[0],
+		Name:   splitParts[1],
+		Model:  splitVersion[0],
+	}, nil
 }
 
 // Based on https://gist.github.com/stoewer/fbe273b711e6a06315d19552dd4d33e6#gistcomment-3673823
