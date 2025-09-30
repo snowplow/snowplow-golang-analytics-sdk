@@ -34,8 +34,6 @@ package main
 import (
     "fmt"
 
-    "github.com/pkg/errors"
-
     "github.com/snowplow/snowplow-golang-analytics-sdk/analytics"
 )
 
@@ -48,56 +46,56 @@ func main() {
     // parse the enriched event string
     parsedEvent, err := analytics.ParseEvent(event)
     if err != nil {
-        fmt.Println(errors.Errorf(`error parsing event: %v`, err))
+        fmt.Printf("error parsing event: %w\n", err)
         return  
     }
 
     // Get specific value from event
     _, err = parsedEvent.GetValue(valueToGet)
     if err != nil {
-        fmt.Println(errors.Errorf(`error getting value %s from event: %v`, valueToGet, err))
+        fmt.Printf("error getting value %s from event: %w\n", valueToGet, err)
         return
     }
     
     // Get object in JSON format
     _, err = parsedEvent.ToJson()
     if err != nil {
-        fmt.Println(errors.Errorf(`error converting parsed event to JSON: %v`, err))
+        fmt.Printf("error converting parsed event to JSON: %w\n", err)
         return
     }
     
     // Get object in map format
     _, err = parsedEvent.ToMap()
     if err != nil {
-        fmt.Println(errors.Errorf(`error converting parsed event to map: %v`, err))
+        fmt.Printf("error converting parsed event to map: %w\n", err)
         return
     }
     
     // Get a JSON of values for a set of canonical fields
     _, err = parsedEvent.GetSubsetJson("page_url", "unstruct_event")
     if err != nil {
-        fmt.Println(errors.Errorf(`error getting subset JSON: %v`, err))
+        fmt.Printf("error getting subset JSON: %w\n", err)
         return
     }
     
     // Get a map of values for a set of canonical fields
     _, err = parsedEvent.GetSubsetMap("page_url", "domain_userid", "contexts", "derived_contexts")
     if err != nil {
-        fmt.Println(errors.Errorf(`error getting subset map: %v`, err))
+        fmt.Printf("error getting subset map: %w\n", err)
         return
     }
     
     // Get a value from all contexts using its path
     _, err = parsedEvent.GetContextValue(`fieldToRetrieve`, `subfieldToRetrieve`, 1) // context.fieldToRetrieve.subfieldToRetrieve[1]
     if err != nil {
-        fmt.Println(errors.Errorf(`error getting context value: %v`, err))
+        fmt.Printf("error getting context value: %w\n", err)
         return
     }
     
     // Get a value from the unstruct_event field using its path
     _, err = parsedEvent.GetContextValue(`snowplow_add_to_cart_1`, `currency`, 0) // unstruct_event.snowplow_add_to_cart_1.currency[0]
     if err != nil {
-        fmt.Println(errors.Errorf(`error getting unstruct_event value: %v`, err))
+        fmt.Printf("error getting unstruct_event value: %w\n", err)
         return
     }
 }
