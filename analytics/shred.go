@@ -15,7 +15,6 @@ package analytics
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"regexp"
 	"strings"
 	"unicode" // For camel to snake case - consider alternative?
@@ -25,7 +24,7 @@ import (
 
 type SelfDescribingData struct {
 	Schema string
-	Data   map[string]interface{} // TODO: See if leaving data as a string or byte array would work, and would be faster.
+	Data   map[string]any // TODO: See if leaving data as a string or byte array would work, and would be faster.
 }
 
 type Contexts struct {
@@ -66,7 +65,7 @@ func extractSchema(uri string) (SchemaParts, error) {
 			Revision: match[6],
 		}, nil
 	} else {
-		return SchemaParts{}, errors.New(fmt.Sprintf("Schema '%s' does not conform to regular expression '%s'", uri, SCHEMA_URI_REGEX))
+		return SchemaParts{}, fmt.Errorf("schema '%s' does not conform to regular expression '%s'", uri, SCHEMA_URI_REGEX)
 	}
 
 }
@@ -89,9 +88,9 @@ func insertUnderscores(s string) string {
 func fixSchema(prefix string, schemaUri string) (string, error) {
 	parts, err := extractSchema(schemaUri)
 	if err != nil {
-		return "", errors.Wrap(err, "Error parsing schema path")
+		return "", fmt.Errorf("error parsing schema path: %w", err)
 	}
-	vendor := strings.Replace(parts.Vendor, ".", "_", -1)
+	vendor := strings.ReplaceAll(parts.Vendor, ".", "_")
 	name := insertUnderscores(parts.Name)
 
 	return strings.ToLower(strings.Join([]string{prefix, vendor, name, parts.Model}, "_")), nil
@@ -102,14 +101,14 @@ func shredContexts(contexts string) ([]KeyVal, error) {
 
 	err := jsoniter.Unmarshal([]byte(contexts), &ctxts)
 	if err != nil {
-		return nil, errors.Wrap(err, "Error unmarshaling context JSON")
+		return nil, fmt.Errorf("error unmarshaling context JSON: %w", err)
 	}
 
-	var distinctContexts = make(map[string][]interface{})
+	var distinctContexts = make(map[string][]any)
 	for _, entry := range ctxts.Data {
 		key, err := fixSchema("contexts", entry.Schema) // is key a bad var name here?
 		if err != nil {
-			return nil, errors.Wrap(err, "Error parsing contexts") // Too much nesting of error wrapping?
+			return nil, fmt.Errorf("error parsing contexts: %w", err)
 		}
 
 		data := entry.Data
@@ -117,7 +116,7 @@ func shredContexts(contexts string) ([]KeyVal, error) {
 		if _, present := distinctContexts[key]; present {
 			distinctContexts[key] = append(distinctContexts[key], data)
 		} else {
-			distinctContexts[key] = make([]interface{}, 1)
+			distinctContexts[key] = make([]any, 1)
 			distinctContexts[key][0] = data
 		}
 	}
@@ -136,12 +135,12 @@ func shredUnstruct(unstruct string) ([]KeyVal, error) {
 
 	err := jsoniter.Unmarshal([]byte(unstruct), &event)
 	if err != nil {
-		return nil, errors.Wrap(err, "Error unmarshaling unstruct event JSON")
+		return nil, fmt.Errorf("error unmarshaling unstruct event JSON: %w", err)
 	}
 
 	key, err := fixSchema("unstruct_event", event.Data.Schema)
 	if err != nil {
-		return nil, errors.Wrap(err, "Error parsing unstruct event") // Too much nesting of error wrapping?
+		return nil, fmt.Errorf("error parsing unstruct event: %w", err)
 	}
 
 	return []KeyVal{{key, event.Data.Data}}, nil

@@ -91,9 +91,9 @@ func TestShredContexts(t *testing.T) {
 	assert := assert.New(t)
 
 	// correct values
-	map1 := map[string]interface{}{"field1": 1.0} // using decimals as the interface value is interpreted as float64
-	map2 := map[string]interface{}{"field1": 2.0}
-	var expected = []KeyVal{{"contexts_com_acme_test_context_1", []interface{}{map1, map2}}}
+	map1 := map[string]any{"field1": 1.0} // using decimals as the interface value is interpreted as float64
+	map2 := map[string]any{"field1": 2.0}
+	var expected = []KeyVal{{"contexts_com_acme_test_context_1", []any{map1, map2}}}
 
 	shreddedContexts, err := shredContexts(ctxt)
 	assert.Nil(err)
@@ -115,7 +115,7 @@ func TestShredUnstruct(t *testing.T) {
 	assert := assert.New(t)
 
 	// correct values
-	map1 := map[string]interface{}{"key": "value"}
+	map1 := map[string]any{"key": "value"}
 	expected := []KeyVal{{"unstruct_event_com_snowplowanalytics_snowplow_link_click_1", map1}}
 
 	shreddedUnstruct, err := shredUnstruct(unstruct)
