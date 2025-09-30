@@ -222,7 +222,7 @@ func BenchmarkToJson(b *testing.B) {
 
 // orderJson uses the jsoniter library to remarshal a []byte, resulting in a sorted JSON
 func orderJson(bytes []byte) ([]byte, error) {
-	var ifce interface{}
+	var ifce any
 	j := jsoniter.Config{SortMapKeys: true}.Froze()
 	err := j.Unmarshal(bytes, &ifce)
 	if err != nil {
@@ -363,7 +363,7 @@ func TestGetContextValue(t *testing.T) {
 	// correct value contexts
 	contextsValue, err = fullEvent.GetContextValue(`contexts_org_schema_web_page_1`, "breadcrumb", 3)
 	assert.Nil(err)
-	assert.Equal([]interface{}(nil), contextsValue)
+	assert.Equal([]any(nil), contextsValue)
 }
 
 func BenchmarkGetValue(b *testing.B) {
@@ -394,7 +394,7 @@ func TestGetSubsetMap(t *testing.T) {
 
 	// empty value
 	emptyValue, err := fullEvent.GetSubsetMap("ti_name")
-	assert.Equal(make(map[string]interface{}), emptyValue)
+	assert.Equal(make(map[string]any), emptyValue)
 	assert.Nil(err)
 }
 
@@ -430,7 +430,7 @@ func TestGetSubsetJSON(t *testing.T) {
 	assert.NotNil(err)
 
 	// empty value
-	emptyJson, _ := jsoniter.Marshal(make(map[string]interface{}))
+	emptyJson, _ := jsoniter.Marshal(make(map[string]any))
 	emptyValue, err := fullEvent.GetSubsetJson("ti_name")
 	assert.Equal(emptyJson, emptyValue)
 	assert.Nil(err)
