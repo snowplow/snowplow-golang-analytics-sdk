@@ -20,19 +20,19 @@ import (
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
-	"github.com/pkg/errors"
 )
 
 const (
-	eventLength   int    = 131
-	EmptyFieldErr string = `Field is empty`
+	eventLength int = 131
+	// EmptyFieldErr is returned when a field value is empty
+	EmptyFieldErr string = `field is empty`
 )
 
 var json = jsoniter.Config{}.Froze()
 
 type KeyVal struct {
 	Key   string
-	Value interface{}
+	Value any
 }
 
 type ValueParser func(string, string) ([]KeyVal, error)
@@ -46,66 +46,66 @@ type ParsedEvent []string
 
 func parseTime(key string, value string) ([]KeyVal, error) {
 	if value == "" {
-		return nil, errors.Wrap(errors.New("Null string found"), fmt.Sprintf("Error parsing key %s", key))
+		return nil, fmt.Errorf("error parsing key %s: null string found", key)
 	}
 	timeLayout := "2006-01-02 15:04:05.999"
 	out, err := time.Parse(timeLayout, value)
 	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("Error parsing field '%s', with value '%s' to timestamp", key, value))
+		return nil, fmt.Errorf("error parsing field '%s', with value '%s' to timestamp: %w", key, value, err)
 	}
 	return []KeyVal{{key, out}}, err
 }
 
 func parseString(key string, value string) ([]KeyVal, error) {
 	if value == "" {
-		return nil, errors.Wrap(errors.New("Null string found"), fmt.Sprintf("Error parsing key %s", key))
+		return nil, fmt.Errorf("error parsing key %s: null string found", key)
 	}
 	return []KeyVal{{key, value}}, nil
 }
 
 func parseInt(key string, value string) ([]KeyVal, error) {
 	if value == "" {
-		return nil, errors.Wrap(errors.New("Null string found"), fmt.Sprintf("Error parsing key %s", key))
+		return nil, fmt.Errorf("error parsing key %s: null string found", key)
 	}
 	intValue, err := strconv.Atoi(value)
 	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("Error parsing key '%s' to integer", key))
+		return nil, fmt.Errorf("error parsing key '%s' to integer: %w", key, err)
 	}
 	return []KeyVal{{key, intValue}}, err
 }
 
 func parseBool(key string, value string) ([]KeyVal, error) {
 	if value == "" {
-		return nil, errors.Wrap(errors.New("Null string found"), fmt.Sprintf("Error parsing key %s", key))
+		return nil, fmt.Errorf("error parsing key %s: null string found", key)
 	}
 	boolValue, err := strconv.ParseBool(value)
 	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("Error parsing key '%s' to boolean", key))
+		return nil, fmt.Errorf("error parsing key '%s' to boolean: %w", key, err)
 	}
 	return []KeyVal{{key, boolValue}}, err
 }
 
 func parseDouble(key string, value string) ([]KeyVal, error) {
 	if value == "" {
-		return nil, errors.Wrap(errors.New("Null string found"), fmt.Sprintf("Error parsing key %s", key))
+		return nil, fmt.Errorf("error parsing key %s: null string found", key)
 	}
 	doubleValue, err := strconv.ParseFloat(value, 64)
 	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("Error parsing key '%s' to double", key))
+		return nil, fmt.Errorf("error parsing key '%s' to double: %w", key, err)
 	}
 	return []KeyVal{{key, doubleValue}}, err
 }
 
 func parseContexts(key string, value string) ([]KeyVal, error) {
 	if value == "" {
-		return nil, errors.Wrap(errors.New("Null string found"), fmt.Sprintf("Error parsing key %s", key))
+		return nil, fmt.Errorf("error parsing key %s: null string found", key)
 	}
 	return shredContexts(value)
 }
 
 func parseUnstruct(key string, value string) ([]KeyVal, error) {
 	if value == "" {
-		return nil, errors.Wrap(errors.New("Null string found"), fmt.Sprintf("Error parsing key %s", key))
+		return nil, fmt.Errorf("error parsing key %s: null string found", key)
 	}
 	return shredUnstruct(value)
 }
@@ -115,16 +115,16 @@ func parseUnstruct(key string, value string) ([]KeyVal, error) {
 func ParseEvent(event string) (ParsedEvent, error) {
 	record := strings.Split(event, "\t")
 	if len(record) != eventLength {
-		return nil, errors.New(fmt.Sprintf("Cannot parse tsv event - wrong number of fields provided: %v", len(record)))
+		return nil, fmt.Errorf("cannot parse tsv event - wrong number of fields provided: %v", len(record))
 	}
 	return record, nil
 }
 
-func (event ParsedEvent) mapifyGoodEvent(knownFields [131]KeyFunctionPair, addGeolocationData bool) (map[string]interface{}, error) {
+func (event ParsedEvent) mapifyGoodEvent(knownFields [131]KeyFunctionPair, addGeolocationData bool) (map[string]any, error) {
 	if len(event) != eventLength {
-		return nil, errors.New(fmt.Sprintf("Cannot transform event - wrong number of fields provided: %v", len(event)))
+		return nil, fmt.Errorf("cannot transform event - wrong number of fields provided: %v", len(event))
 	} else {
-		output := make(map[string]interface{})
+		output := make(map[string]any)
 		if addGeolocationData && event[latitudeIndex] != "" && event[longitudeIndex] != "" {
 			output["geo_location"] = event[latitudeIndex] + "," + event[longitudeIndex]
 		}
@@ -147,12 +147,12 @@ func (event ParsedEvent) mapifyGoodEvent(knownFields [131]KeyFunctionPair, addGe
 }
 
 // ToMap transforms a valid Snowplow ParsedEvent to a Go map.
-func (event ParsedEvent) ToMap() (map[string]interface{}, error) {
+func (event ParsedEvent) ToMap() (map[string]any, error) {
 	return event.mapifyGoodEvent(enrichedEventFieldTypes, false)
 }
 
 // ToMapWithGeo adds the geo_location field, and transforms a valid Snowplow ParsedEvent to a Go map.
-func (event ParsedEvent) ToMapWithGeo() (map[string]interface{}, error) {
+func (event ParsedEvent) ToMapWithGeo() (map[string]any, error) {
 	return event.mapifyGoodEvent(enrichedEventFieldTypes, true)
 }
 
@@ -166,7 +166,7 @@ func (event ParsedEvent) ToJson() ([]byte, error) {
 
 	jsonified, err := json.Marshal(mapified)
 	if err != nil {
-		return nil, errors.Wrap(err, "Error marshaling to JSON")
+		return nil, fmt.Errorf("error marshaling to JSON: %w", err)
 	}
 	return jsonified, nil
 }
@@ -180,7 +180,7 @@ func (event ParsedEvent) ToJsonWithGeo() ([]byte, error) {
 
 	jsonified, err := json.Marshal(mapified)
 	if err != nil {
-		return nil, errors.Wrap(err, "Error marshaling to JSON")
+		return nil, fmt.Errorf("error marshaling to JSON: %w", err)
 	}
 	return jsonified, nil
 }
@@ -188,14 +188,14 @@ func (event ParsedEvent) ToJsonWithGeo() ([]byte, error) {
 // getParsedValue gets a field's value from an event after parsing it with its specific ParseFunction
 func (event ParsedEvent) getParsedValue(field string) ([]KeyVal, error) {
 	if len(event) != eventLength {
-		return nil, errors.New(fmt.Sprintf("Cannot get value - wrong number of fields provided: %v", len(event)))
+		return nil, fmt.Errorf("cannot get value - wrong number of fields provided: %v", len(event))
 	}
 	index, ok := indexMap[field]
 	if !ok {
-		return nil, errors.New(fmt.Sprintf("Key %s not a valid atomic field", field))
+		return nil, fmt.Errorf("key %s not a valid atomic field", field)
 	}
 	if event[index] == "" {
-		return nil, errors.New(EmptyFieldErr)
+		return nil, fmt.Errorf("%s", EmptyFieldErr)
 	}
 	kvPairs, err := enrichedEventFieldTypes[index].ParseFunction(enrichedEventFieldTypes[index].Key, event[index])
 	if err != nil {
@@ -207,7 +207,7 @@ func (event ParsedEvent) getParsedValue(field string) ([]KeyVal, error) {
 
 // GetValue returns the value for a provided atomic field, without processing the rest of the event.
 // For unstruct_event, it returns a map of only the data for the unstruct event.
-func (event ParsedEvent) GetValue(field string) (interface{}, error) {
+func (event ParsedEvent) GetValue(field string) (any, error) {
 	kvPairs, err := event.getParsedValue(field)
 	if err != nil {
 		return nil, err
@@ -215,7 +215,7 @@ func (event ParsedEvent) GetValue(field string) (interface{}, error) {
 
 	if field == "contexts" || field == "derived_contexts" || field == "unstruct_event" {
 		// TODO: DRY HERE TOO?
-		output := make(map[string]interface{})
+		output := make(map[string]any)
 		for _, pair := range kvPairs {
 			output[pair.Key] = pair.Value
 		}
@@ -226,42 +226,40 @@ func (event ParsedEvent) GetValue(field string) (interface{}, error) {
 }
 
 // GetUnstructEventValue returns the value for a provided atomic field inside an event's unstruct_event field
-func (event ParsedEvent) GetUnstructEventValue(path ...interface{}) (interface{}, error) {
-	fullPath := append([]interface{}{`data`, `data`}, path...)
+func (event ParsedEvent) GetUnstructEventValue(path ...any) (any, error) {
+	fullPath := append([]any{`data`, `data`}, path...)
 
 	el := json.Get([]byte(event[indexMap["unstruct_event"]]), fullPath...)
 	return el.GetInterface(), el.LastError()
 }
 
 // GetContextValue returns the value for a provided atomic field inside an event's contexts or derived_contexts
-func (event ParsedEvent) GetContextValue(contextName string, path ...interface{}) (interface{}, error) {
+func (event ParsedEvent) GetContextValue(contextName string, path ...any) (any, error) {
 	contextNames := []string{`contexts`, `derived_contexts`}
-	var contexts []interface{}
+	var contexts []any
 	for _, c := range contextNames {
 		kvPairs, err := event.getParsedValue(c)
 		if err != nil && err.Error() != EmptyFieldErr {
 			return nil, err
 		}
 		// extract the key/value pairs of the event path into a map
-		eventMap := make(map[string]interface{})
+		eventMap := make(map[string]any)
 		for _, pair := range kvPairs {
 			eventMap[pair.Key] = pair.Value
 		}
 		contexts = append(contexts, eventMap)
 	}
 
-	var output []interface{}
-	b := make([]interface{}, len(path))
-	for idx := range path {
-		b[idx] = path[idx]
-	}
+	var output []any
+	b := make([]any, len(path))
+	copy(b, path)
 
 	// iterate through all contextNames and extract the requested path to the output slice
 	for _, ctx := range contexts {
-		for key, contextSlice := range ctx.(map[string]interface{}) {
+		for key, contextSlice := range ctx.(map[string]any) {
 			if key == contextName {
-				for _, ctxValues := range contextSlice.([]interface{}) {
-					ctxValuesMap := ctxValues.(map[string]interface{})
+				for _, ctxValues := range contextSlice.([]any) {
+					ctxValuesMap := ctxValues.(map[string]any)
 					// output whole context if path is not defined
 					if len(path) == 0 {
 						output = append(output, ctxValuesMap)
@@ -285,16 +283,16 @@ func (event ParsedEvent) GetContextValue(contextName string, path ...interface{}
 // GetSubsetMap returns a map of a subset of the event, containing only the atomic fields provided, without processing the rest of the event.
 // For custom events and contexts, only "unstruct_event", "contexts", or "derived_contexts" may be provided, which will produce the entire data object for that field.
 // For contexts, the resultant map will contain all occurrences of all contexts within the provided field.
-func (event ParsedEvent) GetSubsetMap(fields ...string) (map[string]interface{}, error) {
+func (event ParsedEvent) GetSubsetMap(fields ...string) (map[string]any, error) {
 
 	if len(event) != eventLength {
-		return nil, errors.New(fmt.Sprintf("Cannot get values - wrong number of fields provided: %v", len(event)))
+		return nil, fmt.Errorf("cannot get values - wrong number of fields provided: %v", len(event))
 	}
-	output := make(map[string]interface{})
+	output := make(map[string]any)
 	for _, field := range fields {
 		index, ok := indexMap[field]
 		if !ok {
-			return nil, errors.New(fmt.Sprintf("Key %s not a valid atomic field", field))
+			return nil, fmt.Errorf("key %s not a valid atomic field", field)
 		}
 		if event[index] != "" {
 			kvPairs, err := enrichedEventFieldTypes[index].ParseFunction(enrichedEventFieldTypes[index].Key, event[index])
@@ -315,7 +313,7 @@ func (event ParsedEvent) GetSubsetMap(fields ...string) (map[string]interface{},
 func (event ParsedEvent) GetSubsetJson(fields ...string) ([]byte, error) {
 
 	if len(event) != eventLength {
-		return nil, errors.New(fmt.Sprintf("Cannot get values - wrong number of fields provided: %v", len(event)))
+		return nil, fmt.Errorf("cannot get values - wrong number of fields provided: %v", len(event))
 	}
 	subsetMap, err := event.GetSubsetMap(fields...)
 	if err != nil {
