@@ -6,3 +6,6 @@
 
 # go
 vendor/
+
+# benchmarks
+*-benchmarks.txt

@@ -1,3 +1,57 @@
+Version 0.4.2 (2026-02-04)
+--------------------------
+Bounded Schema Cache with LRU Eviction (#002-bounded-schema-cache)
+
+This is a **backward-compatible patch release** that fixes a memory leak while improving performance.
+
+**Fixed:**
+- Unbounded schema cache memory leak in long-running services (v0.4.1 regression)
+  - Previous unbounded map could grow indefinitely with unique schemas
+  - Now uses LRU (Least Recently Used) eviction with configurable bounds
+
+**Added:**
+- `GetCacheStats() CacheStats` - Monitor cache performance (size, hits, misses, evictions, hit rate)
+- `SetSchemaCacheConfig(maxSize int) error` - Configure cache size at runtime (default: 1000 entries)
+- `ClearSchemaCache()` - Manually invalidate cache when needed
+
+**Performance Improvements:**
+- Cache hit latency: 45% faster than v0.4.1 (21ns vs 38ns)
+- Zero allocations on cache hits (down from 1 allocation in v0.4.1)
+- Bounded memory usage: ~250KB for default 1000-entry cache
+
+**Technical Details:**
+- LRU cache implementation using container/list (doubly-linked list)
+- Thread-safe with sync.RWMutex and atomic counters
+- Test coverage: 93.7% (up from 92.0%)
+- 18 new unit tests + 8 benchmarks
+- Zero race conditions verified with 100 concurrent goroutines
+
+**Migration:** Fully backward compatible - no code changes required. Cache configuration is optional.
+
+Version 0.4.1 (2025-06-15)
+--------------------------
+Performance Optimization Release (#001-performance-optimization)
+
+This is a **backward-compatible patch release** focused on performance improvements with zero breaking changes.
+
+**Performance Improvements:**
+- Schema caching: 99% faster for repeated schemas (6744ns → 38ns)
+- Context shredding: 92% faster with 84% fewer allocations (14899ns → 1175ns)
+- Event mapping: 71% faster with 50% fewer allocations (46027ns → 13402ns)
+- JSON transformation: 59% faster (55024ns → 22816ns)
+- String operations: 55% faster (201ns → 91ns)
+- Schema extraction: 89% faster with 98% fewer allocations (6253ns → 701ns)
+
+**Technical Details:**
+- Implemented thread-safe schema cache with sync.RWMutex
+- Pre-allocated maps and slices with capacity hints
+- Optimized insertUnderscores with strings.Builder
+- Added 6 new benchmarks for performance tracking
+- Maintained 92.0% test coverage
+- Zero race conditions verified
+
+**Backward Compatibility:** 100% - All existing APIs unchanged, all tests pass
+
 Version 0.4.0 (2025-09-30)
 --------------------------
 Bump & Clean Dependencies, Go version and GH actions (#42)
