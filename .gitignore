@@ -1,6 +1,9 @@
 # IntelliJ
 .idea
 
+# VS Code
+.vscode
+
 # macOS
 .DS_Store
 
@@ -9,3 +12,8 @@ vendor/
 
 # benchmarks
 *-benchmarks.txt
+
+# specs
+speckit.*.md
+specs/*
+.specify
