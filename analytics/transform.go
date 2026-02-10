@@ -120,26 +120,32 @@ func ParseEvent(event string) (ParsedEvent, error) {
 	return record, nil
 }
 
+// mapifyGoodEvent transforms a TSV event record into a map of key-value pairs.
+// Performance optimizations:
+// - Pre-allocated map (capacity 70) reduces reallocation overhead
+// - Early-skip empty fields avoids unnecessary function calls
 func (event ParsedEvent) mapifyGoodEvent(knownFields [131]KeyFunctionPair, addGeolocationData bool) (map[string]any, error) {
 	if len(event) != eventLength {
 		return nil, fmt.Errorf("cannot transform event - wrong number of fields provided: %v", len(event))
 	} else {
-		output := make(map[string]any)
+		// Pre-allocate output map with estimated capacity (Phase 1 optimization)
+		output := make(map[string]any, 70)
 		if addGeolocationData && event[latitudeIndex] != "" && event[longitudeIndex] != "" {
 			output["geo_location"] = event[latitudeIndex] + "," + event[longitudeIndex]
 		}
 		for index, value := range event {
-			// skip if empty
-			if event[index] != "" {
-				// apply function if not empty
-				kvPairs, err := knownFields[index].ParseFunction(knownFields[index].Key, value)
-				if err != nil {
-					return nil, err
-				}
-				// append all results
-				for _, pair := range kvPairs {
-					output[pair.Key] = pair.Value
-				}
+			// Skip empty fields early (Phase 1 optimization)
+			if value == "" {
+				continue
+			}
+			// apply function if not empty
+			kvPairs, err := knownFields[index].ParseFunction(knownFields[index].Key, value)
+			if err != nil {
+				return nil, err
+			}
+			// append all results
+			for _, pair := range kvPairs {
+				output[pair.Key] = pair.Value
 			}
 		}
 		return output, nil
@@ -288,7 +294,8 @@ func (event ParsedEvent) GetSubsetMap(fields ...string) (map[string]any, error) 
 	if len(event) != eventLength {
 		return nil, fmt.Errorf("cannot get values - wrong number of fields provided: %v", len(event))
 	}
-	output := make(map[string]any)
+	// Pre-allocate output map with known size (Phase 1 optimization)
+	output := make(map[string]any, len(fields))
 	for _, field := range fields {
 		index, ok := indexMap[field]
 		if !ok {

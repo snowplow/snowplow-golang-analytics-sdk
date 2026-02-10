@@ -106,6 +106,7 @@ func TestShredContexts(t *testing.T) {
 }
 
 func BenchmarkShredContexts(b *testing.B) {
+	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		shredContexts(ctxt)
 	}
@@ -130,5 +131,52 @@ func TestShredUnstruct(t *testing.T) {
 func BenchmarkShredUnstruct(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		shredUnstruct(unstruct)
+	}
+}
+
+// Phase 2: Schema cache benchmarks (T030-T032)
+
+func BenchmarkFixSchemaRepeated(b *testing.B) {
+	b.ReportAllocs()
+	uri := "iglu:com.acme.data/some_event/jsonschema/15-34-1"
+	for i := 0; i < b.N; i++ {
+		fixSchema("unstruct", uri)
+	}
+}
+
+func BenchmarkFixSchemaUnique(b *testing.B) {
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		uri := "iglu:com.test/event_" + string(rune(i)) + "/jsonschema/1-0-0"
+		fixSchema("unstruct", uri)
+	}
+}
+
+func TestSchemaCacheConcurrent(t *testing.T) {
+	// Test parallel goroutines accessing cache
+	t.Run("concurrent", func(t *testing.T) {
+		t.Parallel()
+		for i := 0; i < 100; i++ {
+			go func(idx int) {
+				uri := "iglu:com.concurrent.test/event/jsonschema/1-0-0"
+				result, err := fixSchema("contexts", uri)
+				if err != nil {
+					t.Errorf("Error in concurrent access: %v", err)
+				}
+				if result != "contexts_com_concurrent_test_event_1" {
+					t.Errorf("Unexpected result: %s", result)
+				}
+			}(i)
+		}
+	})
+}
+
+// Phase 3: String operation benchmarks (T051)
+
+func BenchmarkInsertUnderscoresLong(b *testing.B) {
+	b.ReportAllocs()
+	longString := "ThisIsAReallyLongCamelCaseStringWithManyWordsToTestPerformance"
+	for i := 0; i < b.N; i++ {
+		insertUnderscores(longString)
 	}
 }

@@ -22,6 +22,9 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
+// schema_pattern is compiled once at package initialization for performance
+var schema_pattern = regexp.MustCompile(SCHEMA_URI_REGEX)
+
 type SelfDescribingData struct {
 	Schema string
 	Data   map[string]any // TODO: See if leaving data as a string or byte array would work, and would be faster.
@@ -52,8 +55,7 @@ const SCHEMA_URI_REGEX string = `(?P<protocol>^iglu:)(?P<vendor>[a-zA-Z0-9-_.]+)
 // https://golang.org/pkg/regexp/#example_Regexp_SubexpNames
 
 func extractSchema(uri string) (SchemaParts, error) {
-	schema_pattern := regexp.MustCompile(SCHEMA_URI_REGEX)
-
+	// Use package-level compiled regex (Phase 2 optimization - T036)
 	match := schema_pattern.FindStringSubmatch(uri)
 	if match != nil {
 		return SchemaParts{
@@ -71,21 +73,39 @@ func extractSchema(uri string) (SchemaParts, error) {
 }
 
 // Based on https://gist.github.com/stoewer/fbe273b711e6a06315d19552dd4d33e6#gistcomment-3673823
+// Phase 3: Optimized with strings.Builder (T052)
 func insertUnderscores(s string) string {
-	var res = make([]rune, 0, len(s))
-	var prev rune
-	for i, r := range s {
-		if unicode.IsUpper(r) && i > 0 && prev != '_' {
-			res = append(res, '_', r)
-		} else {
-			res = append(res, r)
-		}
-		prev = r
+	if len(s) == 0 {
+		return s
 	}
-	return string(res)
+
+	var b strings.Builder
+	b.Grow(len(s) + len(s)/4) // pre-allocate ~25% extra for underscores
+
+	for i, r := range s {
+		if unicode.IsUpper(r) && i > 0 {
+			prev := rune(s[i-1])
+			if prev != '_' {
+				b.WriteRune('_')
+			}
+		}
+		b.WriteRune(r)
+	}
+	return b.String()
 }
 
+// fixSchema transforms a schema URI into a normalized name with vendor prefix.
+// Uses a thread-safe LRU cache to avoid repeated regex parsing and string processing.
+// Cache key format: "prefix:schemaUri" for unique lookups per prefix-schema combination.
+// Default cache size: 1000 entries (~250KB memory), configurable via SetSchemaCacheConfig().
 func fixSchema(prefix string, schemaUri string) (string, error) {
+	// Check LRU cache first
+	cacheKey := prefix + ":" + schemaUri
+	if cached, ok := schemaCache.get(cacheKey); ok {
+		return cached, nil
+	}
+
+	// Cache miss: compute result
 	parts, err := extractSchema(schemaUri)
 	if err != nil {
 		return "", fmt.Errorf("error parsing schema path: %w", err)
@@ -93,9 +113,21 @@ func fixSchema(prefix string, schemaUri string) (string, error) {
 	vendor := strings.ReplaceAll(parts.Vendor, ".", "_")
 	name := insertUnderscores(parts.Name)
 
-	return strings.ToLower(strings.Join([]string{prefix, vendor, name, parts.Model}, "_")), nil
+	result := strings.ToLower(strings.Join([]string{prefix, vendor, name, parts.Model}, "_"))
+
+	// Store in LRU cache
+	schemaCache.put(cacheKey, result)
+
+	return result, nil
 }
 
+// shredContexts extracts self-describing contexts from the contexts array and groups
+// them by schema. Returns key-value pairs where keys are normalized schema names
+// and values are arrays of context data.
+//
+// Performance optimizations:
+// - Pre-allocated maps (capacity 8) and slices (capacity 4) reduce allocations
+// - Uses cached schema lookups via fixSchema for performance
 func shredContexts(contexts string) ([]KeyVal, error) {
 	ctxts := Contexts{}
 
@@ -104,7 +136,8 @@ func shredContexts(contexts string) ([]KeyVal, error) {
 		return nil, fmt.Errorf("error unmarshaling context JSON: %w", err)
 	}
 
-	var distinctContexts = make(map[string][]any)
+	// Pre-allocate distinctContexts map with estimated capacity (Phase 1 optimization)
+	var distinctContexts = make(map[string][]any, 8)
 	for _, entry := range ctxts.Data {
 		key, err := fixSchema("contexts", entry.Schema) // is key a bad var name here?
 		if err != nil {
@@ -116,11 +149,13 @@ func shredContexts(contexts string) ([]KeyVal, error) {
 		if _, present := distinctContexts[key]; present {
 			distinctContexts[key] = append(distinctContexts[key], data)
 		} else {
-			distinctContexts[key] = make([]any, 1)
-			distinctContexts[key][0] = data
+			// Pre-allocate context value array with capacity (Phase 1 optimization)
+			distinctContexts[key] = make([]any, 0, 4)
+			distinctContexts[key] = append(distinctContexts[key], data)
 		}
 	}
 
+	// Pre-allocate output slice (Phase 1 optimization)
 	out := make([]KeyVal, 0, len(distinctContexts))
 	outPointer := &out
 	for key, val := range distinctContexts {
