@@ -193,6 +193,8 @@ func TestMapifyGoodEvent(t *testing.T) {
 }
 
 func BenchmarkMapifyGoodEvent(b *testing.B) {
+	b.ReportAllocs()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		fullEvent.mapifyGoodEvent(enrichedEventFieldTypes, true)
 	}
@@ -439,5 +441,14 @@ func TestGetSubsetJSON(t *testing.T) {
 func BenchmarkGetSubsetJson(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		fullEvent.GetSubsetJson([]string{"app_id", "br_features_flash", "br_features_pdf", "collector_tstamp", "contexts", "unstruct_event"}...)
+	}
+}
+
+func BenchmarkGetSubsetMapAllocs(b *testing.B) {
+	b.ReportAllocs()
+	fields := []string{"platform", "event", "contexts", "unstruct_event"}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		fullEvent.GetSubsetMap(fields...)
 	}
 }

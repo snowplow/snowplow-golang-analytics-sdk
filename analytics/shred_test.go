@@ -14,6 +14,7 @@
 package analytics
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -106,6 +107,7 @@ func TestShredContexts(t *testing.T) {
 }
 
 func BenchmarkShredContexts(b *testing.B) {
+	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		shredContexts(ctxt)
 	}
@@ -130,5 +132,58 @@ func TestShredUnstruct(t *testing.T) {
 func BenchmarkShredUnstruct(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		shredUnstruct(unstruct)
+	}
+}
+
+func BenchmarkFixSchemaRepeated(b *testing.B) {
+	b.ReportAllocs()
+	uri := "iglu:com.acme.data/some_event/jsonschema/15-34-1"
+	for i := 0; i < b.N; i++ {
+		fixSchema("unstruct", uri)
+	}
+}
+
+func BenchmarkFixSchemaUnique(b *testing.B) {
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		uri := "iglu:com.test/event_" + string(rune(i)) + "/jsonschema/1-0-0"
+		fixSchema("unstruct", uri)
+	}
+}
+
+func BenchmarkFixSchemaParallel(b *testing.B) {
+	uri := "iglu:com.acme.data/some_event/jsonschema/15-34-1"
+	fixSchema("unstruct", uri) // warm cache
+	b.ResetTimer()
+	b.ReportAllocs()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			fixSchema("unstruct", uri)
+		}
+	})
+}
+
+func BenchmarkFixSchemaParallel10(b *testing.B) {
+	uris := make([]string, 10)
+	for i := range uris {
+		uris[i] = fmt.Sprintf("iglu:com.acme.data/event_%d/jsonschema/1-0-0", i)
+		fixSchema("contexts", uris[i]) // warm cache
+	}
+	b.ResetTimer()
+	b.ReportAllocs()
+	b.RunParallel(func(pb *testing.PB) {
+		i := 0
+		for pb.Next() {
+			fixSchema("contexts", uris[i%10])
+			i++
+		}
+	})
+}
+
+func BenchmarkInsertUnderscoresLong(b *testing.B) {
+	b.ReportAllocs()
+	longString := "ThisIsAReallyLongCamelCaseStringWithManyWordsToTestPerformance"
+	for i := 0; i < b.N; i++ {
+		insertUnderscores(longString)
 	}
 }
