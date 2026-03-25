@@ -20,8 +20,8 @@ import (
 
 // US1 Benchmarks: Cache Performance
 
-func BenchmarkLRUCacheHit(b *testing.B) {
-	cache := newLRUCache(1000)
+func BenchmarkCacheHit(b *testing.B) {
+	cache := newSchemaStore(1000)
 	cache.put("test_key", "test_value")
 
 	b.ResetTimer()
@@ -32,8 +32,8 @@ func BenchmarkLRUCacheHit(b *testing.B) {
 	}
 }
 
-func BenchmarkLRUCacheMiss(b *testing.B) {
-	cache := newLRUCache(1000)
+func BenchmarkCacheMiss(b *testing.B) {
+	cache := newSchemaStore(1000)
 
 	b.ResetTimer()
 	b.ReportAllocs()
@@ -43,8 +43,8 @@ func BenchmarkLRUCacheMiss(b *testing.B) {
 	}
 }
 
-func BenchmarkLRUEviction(b *testing.B) {
-	cache := newLRUCache(100)
+func BenchmarkCacheEviction(b *testing.B) {
+	cache := newSchemaStore(100)
 
 	// Fill cache
 	for i := 0; i < 100; i++ {
@@ -54,13 +54,14 @@ func BenchmarkLRUEviction(b *testing.B) {
 	b.ResetTimer()
 	b.ReportAllocs()
 
+	// Every iteration triggers a nuke then re-inserts
 	for i := 0; i < b.N; i++ {
 		cache.put(fmt.Sprintf("evict_%d", i), "value")
 	}
 }
 
-func BenchmarkLRUCacheChurn(b *testing.B) {
-	cache := newLRUCache(1000)
+func BenchmarkCacheChurn(b *testing.B) {
+	cache := newSchemaStore(1000)
 
 	// Generate 2000 unique schemas (50% miss rate initially)
 	schemas := make([]string, 2000)
@@ -79,8 +80,8 @@ func BenchmarkLRUCacheChurn(b *testing.B) {
 	}
 }
 
-func BenchmarkLRUConcurrent(b *testing.B) {
-	cache := newLRUCache(1000)
+func BenchmarkCacheConcurrent(b *testing.B) {
+	cache := newSchemaStore(1000)
 	cache.put("shared_key", "value")
 
 	b.ResetTimer()
@@ -94,7 +95,7 @@ func BenchmarkLRUConcurrent(b *testing.B) {
 // US2 Benchmarks: Observability Performance
 
 func BenchmarkGetCacheStats(b *testing.B) {
-	cache := newLRUCache(1000)
+	cache := newSchemaStore(1000)
 	cache.put("key1", "value1")
 	cache.get("key1")
 
@@ -116,7 +117,7 @@ func BenchmarkSetSchemaCacheConfig(b *testing.B) {
 	}
 
 	// Restore default
-	SetSchemaCacheConfig(1000)
+	SetSchemaCacheConfig(10000)
 }
 
 func BenchmarkClearSchemaCache(b *testing.B) {

@@ -55,7 +55,6 @@ const SCHEMA_URI_REGEX string = `(?P<protocol>^iglu:)(?P<vendor>[a-zA-Z0-9-_.]+)
 // https://golang.org/pkg/regexp/#example_Regexp_SubexpNames
 
 func extractSchema(uri string) (SchemaParts, error) {
-	// Use package-level compiled regex (Phase 2 optimization - T036)
 	match := schema_pattern.FindStringSubmatch(uri)
 	if match != nil {
 		return SchemaParts{
@@ -73,7 +72,6 @@ func extractSchema(uri string) (SchemaParts, error) {
 }
 
 // Based on https://gist.github.com/stoewer/fbe273b711e6a06315d19552dd4d33e6#gistcomment-3673823
-// Phase 3: Optimized with strings.Builder (T052)
 func insertUnderscores(s string) string {
 	if len(s) == 0 {
 		return s
@@ -95,17 +93,15 @@ func insertUnderscores(s string) string {
 }
 
 // fixSchema transforms a schema URI into a normalized name with vendor prefix.
-// Uses a thread-safe LRU cache to avoid repeated regex parsing and string processing.
+// Uses a thread-safe cache to avoid repeated regex parsing and string processing.
 // Cache key format: "prefix:schemaUri" for unique lookups per prefix-schema combination.
-// Default cache size: 1000 entries (~250KB memory), configurable via SetSchemaCacheConfig().
+// Default cache size: 10,000 entries, configurable via SetSchemaCacheConfig().
 func fixSchema(prefix string, schemaUri string) (string, error) {
-	// Check LRU cache first
 	cacheKey := prefix + ":" + schemaUri
 	if cached, ok := schemaCache.get(cacheKey); ok {
 		return cached, nil
 	}
 
-	// Cache miss: compute result
 	parts, err := extractSchema(schemaUri)
 	if err != nil {
 		return "", fmt.Errorf("error parsing schema path: %w", err)
@@ -115,7 +111,6 @@ func fixSchema(prefix string, schemaUri string) (string, error) {
 
 	result := strings.ToLower(strings.Join([]string{prefix, vendor, name, parts.Model}, "_"))
 
-	// Store in LRU cache
 	schemaCache.put(cacheKey, result)
 
 	return result, nil
@@ -136,7 +131,6 @@ func shredContexts(contexts string) ([]KeyVal, error) {
 		return nil, fmt.Errorf("error unmarshaling context JSON: %w", err)
 	}
 
-	// Pre-allocate distinctContexts map with estimated capacity (Phase 1 optimization)
 	var distinctContexts = make(map[string][]any, 8)
 	for _, entry := range ctxts.Data {
 		key, err := fixSchema("contexts", entry.Schema) // is key a bad var name here?
@@ -149,13 +143,11 @@ func shredContexts(contexts string) ([]KeyVal, error) {
 		if _, present := distinctContexts[key]; present {
 			distinctContexts[key] = append(distinctContexts[key], data)
 		} else {
-			// Pre-allocate context value array with capacity (Phase 1 optimization)
 			distinctContexts[key] = make([]any, 0, 4)
 			distinctContexts[key] = append(distinctContexts[key], data)
 		}
 	}
 
-	// Pre-allocate output slice (Phase 1 optimization)
 	out := make([]KeyVal, 0, len(distinctContexts))
 	outPointer := &out
 	for key, val := range distinctContexts {

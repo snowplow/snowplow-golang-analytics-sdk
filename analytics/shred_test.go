@@ -14,6 +14,7 @@
 package analytics
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -134,8 +135,6 @@ func BenchmarkShredUnstruct(b *testing.B) {
 	}
 }
 
-// Phase 2: Schema cache benchmarks (T030-T032)
-
 func BenchmarkFixSchemaRepeated(b *testing.B) {
 	b.ReportAllocs()
 	uri := "iglu:com.acme.data/some_event/jsonschema/15-34-1"
@@ -153,11 +152,13 @@ func BenchmarkFixSchemaUnique(b *testing.B) {
 }
 
 func TestSchemaCacheConcurrent(t *testing.T) {
-	// Test parallel goroutines accessing cache
 	t.Run("concurrent", func(t *testing.T) {
 		t.Parallel()
+		var wg sync.WaitGroup
+		wg.Add(100)
 		for i := 0; i < 100; i++ {
 			go func(idx int) {
+				defer wg.Done()
 				uri := "iglu:com.concurrent.test/event/jsonschema/1-0-0"
 				result, err := fixSchema("contexts", uri)
 				if err != nil {
@@ -168,10 +169,9 @@ func TestSchemaCacheConcurrent(t *testing.T) {
 				}
 			}(i)
 		}
+		wg.Wait()
 	})
 }
-
-// Phase 3: String operation benchmarks (T051)
 
 func BenchmarkInsertUnderscoresLong(b *testing.B) {
 	b.ReportAllocs()

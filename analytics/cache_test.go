@@ -25,8 +25,8 @@ import (
 
 // US1 Tests: Bounded Memory Consumption
 
-func TestLRUCacheBasicOperations(t *testing.T) {
-	cache := newLRUCache(10)
+func TestCacheBasicOperations(t *testing.T) {
+	cache := newSchemaStore(10)
 
 	// Happy path: add and retrieve
 	cache.put("key1", "value1")
@@ -40,14 +40,14 @@ func TestLRUCacheBasicOperations(t *testing.T) {
 	assert.Equal(t, "", val)
 
 	// Edge case: empty cache operations
-	emptyCache := newLRUCache(10)
+	emptyCache := newSchemaStore(10)
 	val, ok = emptyCache.get("any")
 	assert.False(t, ok)
 	assert.Equal(t, "", val)
 }
 
-func TestLRUCacheEviction(t *testing.T) {
-	cache := newLRUCache(3)
+func TestCacheEviction(t *testing.T) {
+	cache := newSchemaStore(3)
 
 	// Fill cache to maxSize
 	cache.put("key1", "value1")
@@ -55,23 +55,23 @@ func TestLRUCacheEviction(t *testing.T) {
 	cache.put("key3", "value3")
 	assert.Equal(t, 3, len(cache.cache))
 
-	// Add one more - should evict oldest (key1)
+	// Add one more - nuke strategy clears entire cache, then inserts new entry
 	cache.put("key4", "value4")
-	assert.Equal(t, 3, len(cache.cache))
+	assert.Equal(t, 1, len(cache.cache))
 
-	// Verify key1 was evicted
+	// All prior entries should be gone
 	_, ok := cache.get("key1")
 	assert.False(t, ok)
-
-	// Verify others still exist
 	_, ok = cache.get("key2")
-	assert.True(t, ok)
+	assert.False(t, ok)
 	_, ok = cache.get("key3")
-	assert.True(t, ok)
+	assert.False(t, ok)
+
+	// New entry should be present
 	_, ok = cache.get("key4")
 	assert.True(t, ok)
 
-	// Verify eviction counter
+	// Eviction counter incremented once (one full clear)
 	assert.Equal(t, uint64(1), cache.evictions.Load())
 
 	// Verify size never exceeds maxSize
@@ -81,41 +81,31 @@ func TestLRUCacheEviction(t *testing.T) {
 	}
 }
 
-func TestLRUCacheLRUOrdering(t *testing.T) {
-	cache := newLRUCache(3)
+func TestCacheNukeOnFull(t *testing.T) {
+	// After a nuke, fresh entries can accumulate again until maxSize
+	cache := newSchemaStore(5)
 
-	// Add 3 entries
-	cache.put("key1", "value1")
-	cache.put("key2", "value2")
-	cache.put("key3", "value3")
+	for i := 0; i < 5; i++ {
+		cache.put(fmt.Sprintf("key%d", i), "value")
+	}
+	assert.Equal(t, 5, len(cache.cache))
+	assert.Equal(t, uint64(0), cache.evictions.Load())
 
-	// Access middle entry (key2) - moves to front
-	cache.get("key2")
+	// Trigger nuke
+	cache.put("newkey", "value")
+	assert.Equal(t, 1, len(cache.cache))
+	assert.Equal(t, uint64(1), cache.evictions.Load())
 
-	// Add new entry - should evict key1 (oldest), not key2
-	cache.put("key4", "value4")
-
-	// Verify key1 evicted, key2 still present
-	_, ok := cache.get("key1")
-	assert.False(t, ok)
-	_, ok = cache.get("key2")
-	assert.True(t, ok)
-
-	// Repeated access keeps entry at front
-	cache.get("key3")
-	cache.get("key3")
-	cache.get("key3")
-	cache.put("key5", "value5")
-
-	// key4 should be evicted (oldest), key3 still present
-	_, ok = cache.get("key4")
-	assert.False(t, ok)
-	_, ok = cache.get("key3")
-	assert.True(t, ok)
+	// Cache is usable again — refill to capacity
+	for i := 0; i < 4; i++ {
+		cache.put(fmt.Sprintf("refill%d", i), "value")
+	}
+	assert.Equal(t, 5, len(cache.cache))
+	assert.Equal(t, uint64(1), cache.evictions.Load())
 }
 
-func TestLRUCacheThreadSafety(t *testing.T) {
-	cache := newLRUCache(100)
+func TestCacheThreadSafety(t *testing.T) {
+	cache := newSchemaStore(100)
 	var wg sync.WaitGroup
 
 	// 100 goroutines simultaneously reading/writing
@@ -138,9 +128,9 @@ func TestLRUCacheThreadSafety(t *testing.T) {
 	assert.Greater(t, cache.hits.Load()+cache.misses.Load(), uint64(0))
 }
 
-func TestLRUCacheMemoryBounds(t *testing.T) {
+func TestCacheMemoryBounds(t *testing.T) {
 	// Measure memory with 1000 entries
-	cache := newLRUCache(1000)
+	cache := newSchemaStore(1000)
 
 	runtime.GC()
 	var m1 runtime.MemStats
@@ -169,17 +159,17 @@ func TestLRUCacheMemoryBounds(t *testing.T) {
 
 	perEntry := delta / 1000
 
-	// Verify reasonable per-entry memory (~250 bytes target, allow up to 500 bytes with overhead)
+	// Verify reasonable per-entry memory (allow up to 500 bytes with overhead)
 	assert.LessOrEqual(t, perEntry, uint64(500), "Per-entry memory exceeds 500 bytes: %d bytes", perEntry)
 
-	t.Logf("Memory per entry: %d bytes (target: ~250 bytes)", perEntry)
+	t.Logf("Memory per entry: %d bytes", perEntry)
 	t.Logf("Total cache memory: %d bytes for 1000 entries", delta)
 }
 
 // US2 Tests: Cache Observability
 
 func TestGetCacheStatsEmpty(t *testing.T) {
-	cache := newLRUCache(10)
+	cache := newSchemaStore(10)
 	stats := getCacheStats(cache)
 
 	assert.Equal(t, 0, stats.Size)
@@ -190,7 +180,7 @@ func TestGetCacheStatsEmpty(t *testing.T) {
 }
 
 func TestGetCacheStatsHits(t *testing.T) {
-	cache := newLRUCache(10)
+	cache := newSchemaStore(10)
 	cache.put("key1", "value1")
 
 	// Access 5 times
@@ -205,7 +195,7 @@ func TestGetCacheStatsHits(t *testing.T) {
 }
 
 func TestGetCacheStatsMisses(t *testing.T) {
-	cache := newLRUCache(10)
+	cache := newSchemaStore(10)
 
 	// 10 misses
 	for i := 0; i < 10; i++ {
@@ -219,24 +209,24 @@ func TestGetCacheStatsMisses(t *testing.T) {
 }
 
 func TestGetCacheStatsEvictions(t *testing.T) {
-	cache := newLRUCache(10)
+	cache := newSchemaStore(10)
 
 	// Fill cache
 	for i := 0; i < 10; i++ {
 		cache.put(fmt.Sprintf("key%d", i), fmt.Sprintf("value%d", i))
 	}
 
-	// Add 5 more - should evict 5
+	// Add 5 more - first overflow triggers a nuke (evictions=1); subsequent adds fit without nuking
 	for i := 10; i < 15; i++ {
 		cache.put(fmt.Sprintf("key%d", i), fmt.Sprintf("value%d", i))
 	}
 
 	stats := getCacheStats(cache)
-	assert.Equal(t, uint64(5), stats.Evictions)
+	assert.Equal(t, uint64(1), stats.Evictions)
 }
 
 func TestGetCacheStatsHitRate(t *testing.T) {
-	cache := newLRUCache(10)
+	cache := newSchemaStore(10)
 	cache.put("key1", "value1")
 
 	// 80 hits
@@ -256,11 +246,11 @@ func TestGetCacheStatsHitRate(t *testing.T) {
 }
 
 func TestGetCacheStatsThreadSafe(t *testing.T) {
-	cache := newLRUCache(100)
+	cache := newSchemaStore(100)
 	cache.put("key1", "value1")
 
 	var wg sync.WaitGroup
-	// 100 goroutines calling GetCacheStats concurrently
+	// 100 goroutines calling getCacheStats concurrently
 	for i := 0; i < 100; i++ {
 		wg.Add(1)
 		go func() {
@@ -273,8 +263,8 @@ func TestGetCacheStatsThreadSafe(t *testing.T) {
 	wg.Wait()
 }
 
-// Helper for testing GetCacheStats on arbitrary cache
-func getCacheStats(cache *lruCache) CacheStats {
+// Helper for testing getCacheStats on arbitrary cache instances
+func getCacheStats(cache *schemaStore) CacheStats {
 	cache.mu.RLock()
 	size := len(cache.cache)
 	cache.mu.RUnlock()
@@ -307,7 +297,7 @@ func TestSetSchemaCacheConfigValid(t *testing.T) {
 	assert.Nil(t, SetSchemaCacheConfig(5000))
 
 	// Restore default
-	SetSchemaCacheConfig(1000)
+	SetSchemaCacheConfig(10000)
 }
 
 func TestSetSchemaCacheConfigInvalid(t *testing.T) {
@@ -321,7 +311,7 @@ func TestSetSchemaCacheConfigInvalid(t *testing.T) {
 }
 
 func TestSetSchemaCacheConfigShrink(t *testing.T) {
-	// Setup: Fill cache with 1000 entries
+	// Setup: fill cache with 1000 entries
 	SetSchemaCacheConfig(1000)
 	ClearSchemaCache()
 
@@ -332,15 +322,14 @@ func TestSetSchemaCacheConfigShrink(t *testing.T) {
 	stats1 := GetCacheStats()
 	assert.Equal(t, 1000, stats1.Size)
 
-	// Shrink to 500
+	// Shrink to 500: cache is cleared entirely since len > maxSize
 	SetSchemaCacheConfig(500)
 
 	stats2 := GetCacheStats()
-	assert.Equal(t, 500, stats2.Size)
-	assert.Equal(t, uint64(500), stats2.Evictions)
+	assert.Equal(t, 0, stats2.Size)
 
 	// Restore default
-	SetSchemaCacheConfig(1000)
+	SetSchemaCacheConfig(10000)
 }
 
 func TestSetSchemaCacheConfigGrow(t *testing.T) {
@@ -364,7 +353,7 @@ func TestSetSchemaCacheConfigGrow(t *testing.T) {
 	assert.Equal(t, 1000, stats.Size)
 
 	// Restore default
-	SetSchemaCacheConfig(1000)
+	SetSchemaCacheConfig(10000)
 }
 
 func TestSetSchemaCacheConfigDisable(t *testing.T) {
@@ -381,7 +370,7 @@ func TestSetSchemaCacheConfigDisable(t *testing.T) {
 	assert.Equal(t, 0, stats.Size)
 
 	// Restore default
-	SetSchemaCacheConfig(1000)
+	SetSchemaCacheConfig(10000)
 }
 
 func TestSetSchemaCacheConfigConcurrent(t *testing.T) {
@@ -403,10 +392,11 @@ func TestSetSchemaCacheConfigConcurrent(t *testing.T) {
 	assert.GreaterOrEqual(t, schemaCache.maxSize, 100)
 
 	// Restore default
-	SetSchemaCacheConfig(1000)
+	SetSchemaCacheConfig(10000)
 }
 
 func TestClearSchemaCacheBasic(t *testing.T) {
+	SetSchemaCacheConfig(10000)
 	ClearSchemaCache()
 
 	// Add 100 entries
@@ -432,7 +422,7 @@ func TestClearSchemaCacheBasic(t *testing.T) {
 	assert.Equal(t, uint64(0), stats2.Evictions)
 
 	// Verify maxSize preserved
-	assert.Equal(t, 1000, schemaCache.maxSize)
+	assert.Equal(t, 10000, schemaCache.maxSize)
 }
 
 func TestClearSchemaCacheThreadSafe(t *testing.T) {
