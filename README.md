@@ -169,6 +169,19 @@ func (event ParsedEvent) GetContextValue(contextName string, path ...interface{}
 ```
 
 GetContextValue gets a value from a parsed event's contexts using it's path (`contexts_example_1.example[0]`)
+
+## Schema Key Cache
+
+Transformed schema keys are cached automatically for performance. The default cache holds up to 10,000 entries.
+
+```go
+// Adjust cache size
+analytics.SetSchemaCacheSize(5000)
+
+// Disable caching
+analytics.SetSchemaCacheSize(0)
+```
+
 ## Copyright and license
 
 Snowplow Golang Analytics SDK is copyright 2021 Snowplow Analytics Ltd.

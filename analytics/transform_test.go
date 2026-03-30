@@ -14,6 +14,9 @@
 package analytics
 
 import (
+	"fmt"
+	"math/rand"
+	"strings"
 	"testing"
 
 	jsoniter "github.com/json-iterator/go"
@@ -43,6 +46,7 @@ func TestParseTime(t *testing.T) {
 }
 
 func BenchmarkParseTime(b *testing.B) {
+	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		parseTime("tstampKey", "2021-04-07 12:01:01.999")
 	}
@@ -65,6 +69,7 @@ func TestParseString(t *testing.T) {
 }
 
 func BenchmarkParseString(b *testing.B) {
+	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		parseString("stringKey", "stringValue")
 	}
@@ -93,6 +98,7 @@ func TestParseInt(t *testing.T) {
 }
 
 func BenchmarkParseInt(b *testing.B) {
+	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		parseInt("intKey", "123")
 	}
@@ -121,6 +127,7 @@ func TestParseBool(t *testing.T) {
 }
 
 func BenchmarkParseBool(b *testing.B) {
+	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		parseBool("boolKey", "1")
 	}
@@ -146,6 +153,7 @@ func TestParseDouble(t *testing.T) {
 }
 
 func BenchmarkParseDouble(b *testing.B) {
+	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		parseDouble("doubleKey", "1234.234567")
 	}
@@ -168,6 +176,7 @@ func TestParseEvent(t *testing.T) {
 }
 
 func BenchmarkParseEvent(b *testing.B) {
+	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		ParseEvent(tsvEvent)
 	}
@@ -193,6 +202,8 @@ func TestMapifyGoodEvent(t *testing.T) {
 }
 
 func BenchmarkMapifyGoodEvent(b *testing.B) {
+	b.ReportAllocs()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		fullEvent.mapifyGoodEvent(enrichedEventFieldTypes, true)
 	}
@@ -215,6 +226,7 @@ func TestToJson(t *testing.T) {
 }
 
 func BenchmarkToJson(b *testing.B) {
+	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		fullEvent.ToJson()
 	}
@@ -252,6 +264,7 @@ func TestToJsonWithGeo(t *testing.T) {
 }
 
 func BenchmarkToJsonWithGeo(b *testing.B) {
+	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		fullEvent.ToJsonWithGeo()
 	}
@@ -272,6 +285,7 @@ func TestToMap(t *testing.T) {
 }
 
 func BenchmarkToMap(b *testing.B) {
+	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		fullEvent.ToMap()
 	}
@@ -292,6 +306,7 @@ func TestToMapWithGeo(t *testing.T) {
 }
 
 func BenchmarkToMapWithGeo(b *testing.B) {
+	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		fullEvent.ToMapWithGeo()
 	}
@@ -367,6 +382,7 @@ func TestGetContextValue(t *testing.T) {
 }
 
 func BenchmarkGetValue(b *testing.B) {
+	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		fullEvent.GetValue("app_id")
 		fullEvent.GetValue("contexts")
@@ -399,6 +415,7 @@ func TestGetSubsetMap(t *testing.T) {
 }
 
 func BenchmarkGetSubsetMap(b *testing.B) {
+	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		fullEvent.GetSubsetMap([]string{"app_id", "br_features_flash", "br_features_pdf", "collector_tstamp", "contexts", "unstruct_event"}...)
 	}
@@ -437,7 +454,84 @@ func TestGetSubsetJSON(t *testing.T) {
 }
 
 func BenchmarkGetSubsetJson(b *testing.B) {
+	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		fullEvent.GetSubsetJson([]string{"app_id", "br_features_flash", "br_features_pdf", "collector_tstamp", "contexts", "unstruct_event"}...)
 	}
+}
+
+func BenchmarkGetSubsetMapAllocs(b *testing.B) {
+	b.ReportAllocs()
+	fields := []string{"platform", "event", "contexts", "unstruct_event"}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		fullEvent.GetSubsetMap(fields...)
+	}
+}
+
+func BenchmarkToJsonParallel(b *testing.B) {
+	b.ReportAllocs()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			fullEvent.ToJson()
+		}
+	})
+}
+
+func BenchmarkToMapParallel(b *testing.B) {
+	b.ReportAllocs()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			fullEvent.ToMap()
+		}
+	})
+}
+
+func BenchmarkMapifyGoodEventParallel(b *testing.B) {
+	b.ReportAllocs()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			fullEvent.mapifyGoodEvent(enrichedEventFieldTypes, true)
+		}
+	})
+}
+
+func BenchmarkToMapParallelRichContexts(b *testing.B) {
+	// Pool of 100 context schemas
+	contextPool := make([]string, 100)
+	for i := 0; i < 100; i++ {
+		contextPool[i] = fmt.Sprintf(
+			`{"schema":"iglu:com.test.vendor_%d/EventContext/jsonschema/1-0-0","data":{"field1":%d,"field2":"value_%d"}}`,
+			i, i, i)
+	}
+
+	// Pre-build 1000 events, each with 10 random contexts from the pool
+	const numEvents = 1000
+	rng := rand.New(rand.NewSource(42))
+	ctxIdx := indexMap["contexts"]
+	events := make([]ParsedEvent, numEvents)
+	for e := 0; e < numEvents; e++ {
+		perm := rng.Perm(100)[:10]
+		entries := make([]string, 10)
+		for j, p := range perm {
+			entries[j] = contextPool[p]
+		}
+		ctxJSON := `{"schema":"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0","data":[` +
+			strings.Join(entries, ",") + `]}`
+
+		ev := make(ParsedEvent, len(fullEvent))
+		copy(ev, fullEvent)
+		ev[ctxIdx] = ctxJSON
+		events[e] = ev
+	}
+
+	b.ResetTimer()
+	b.ReportAllocs()
+	b.RunParallel(func(pb *testing.PB) {
+		i := 0
+		for pb.Next() {
+			events[i%numEvents].ToMap()
+			i++
+		}
+	})
 }

@@ -14,6 +14,7 @@
 package analytics
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -44,6 +45,7 @@ func TestExtractSchema(t *testing.T) {
 }
 
 func BenchmarkExtractSchema(b *testing.B) {
+	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		extractSchema("iglu:com.acme.data/some_event/jsonschema/15-34-1")
 	}
@@ -59,9 +61,25 @@ func TestInsertUnderscores(t *testing.T) {
 	// abomination
 	underscoredMixture := insertUnderscores("this_StringIsAMixture")
 	assert.Equal("this_String_Is_A_Mixture", underscoredMixture)
+
+	// empty string
+	assert.Equal("", insertUnderscores(""))
+
+	// single character
+	assert.Equal("A", insertUnderscores("A"))
+
+	// no uppercase
+	assert.Equal("alllowercase", insertUnderscores("alllowercase"))
+
+	// multi-byte UTF-8
+	assert.Equal("café_Latte", insertUnderscores("caféLatte"))
+
+	// consecutive uppercase after multi-byte char
+	assert.Equal("über_Cool_Thing", insertUnderscores("überCoolThing"))
 }
 
 func BenchmarkInsertUnderscores(b *testing.B) {
+	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		insertUnderscores("ThisStringIsCamelCase")
 	}
@@ -82,6 +100,7 @@ func TestFixSchema(t *testing.T) {
 }
 
 func BenchmarkFixSchema(b *testing.B) {
+	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		fixSchema("unstruct", "iglu:com.acme.data/some_event/jsonschema/15-34-1")
 	}
@@ -106,6 +125,7 @@ func TestShredContexts(t *testing.T) {
 }
 
 func BenchmarkShredContexts(b *testing.B) {
+	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		shredContexts(ctxt)
 	}
@@ -128,7 +148,61 @@ func TestShredUnstruct(t *testing.T) {
 }
 
 func BenchmarkShredUnstruct(b *testing.B) {
+	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		shredUnstruct(unstruct)
+	}
+}
+
+func BenchmarkFixSchemaRepeated(b *testing.B) {
+	b.ReportAllocs()
+	uri := "iglu:com.acme.data/some_event/jsonschema/15-34-1"
+	for i := 0; i < b.N; i++ {
+		fixSchema("unstruct", uri)
+	}
+}
+
+func BenchmarkFixSchemaUnique(b *testing.B) {
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		uri := "iglu:com.test/event_" + string(rune(i)) + "/jsonschema/1-0-0"
+		fixSchema("unstruct", uri)
+	}
+}
+
+func BenchmarkFixSchemaParallel(b *testing.B) {
+	uri := "iglu:com.acme.data/some_event/jsonschema/15-34-1"
+	fixSchema("unstruct", uri)
+	b.ResetTimer()
+	b.ReportAllocs()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			fixSchema("unstruct", uri)
+		}
+	})
+}
+
+func BenchmarkFixSchemaParallel10(b *testing.B) {
+	uris := make([]string, 10)
+	for i := range uris {
+		uris[i] = fmt.Sprintf("iglu:com.acme.data/event_%d/jsonschema/1-0-0", i)
+		fixSchema("contexts", uris[i])
+	}
+	b.ResetTimer()
+	b.ReportAllocs()
+	b.RunParallel(func(pb *testing.PB) {
+		i := 0
+		for pb.Next() {
+			fixSchema("contexts", uris[i%10])
+			i++
+		}
+	})
+}
+
+func BenchmarkInsertUnderscoresLong(b *testing.B) {
+	b.ReportAllocs()
+	longString := "ThisIsAReallyLongCamelCaseStringWithManyWordsToTestPerformance"
+	for i := 0; i < b.N; i++ {
+		insertUnderscores(longString)
 	}
 }

@@ -22,6 +22,8 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
+var schema_pattern = regexp.MustCompile(SCHEMA_URI_REGEX)
+
 type SelfDescribingData struct {
 	Schema string
 	Data   map[string]any // TODO: See if leaving data as a string or byte array would work, and would be faster.
@@ -52,8 +54,6 @@ const SCHEMA_URI_REGEX string = `(?P<protocol>^iglu:)(?P<vendor>[a-zA-Z0-9-_.]+)
 // https://golang.org/pkg/regexp/#example_Regexp_SubexpNames
 
 func extractSchema(uri string) (SchemaParts, error) {
-	schema_pattern := regexp.MustCompile(SCHEMA_URI_REGEX)
-
 	match := schema_pattern.FindStringSubmatch(uri)
 	if match != nil {
 		return SchemaParts{
@@ -70,22 +70,32 @@ func extractSchema(uri string) (SchemaParts, error) {
 
 }
 
-// Based on https://gist.github.com/stoewer/fbe273b711e6a06315d19552dd4d33e6#gistcomment-3673823
 func insertUnderscores(s string) string {
-	var res = make([]rune, 0, len(s))
-	var prev rune
-	for i, r := range s {
-		if unicode.IsUpper(r) && i > 0 && prev != '_' {
-			res = append(res, '_', r)
-		} else {
-			res = append(res, r)
-		}
-		prev = r
+	if len(s) == 0 {
+		return s
 	}
-	return string(res)
+
+	var b strings.Builder
+	b.Grow(len(s) + len(s)/4)
+
+	for i, r := range s {
+		if unicode.IsUpper(r) && i > 0 {
+			prev := rune(s[i-1])
+			if prev != '_' {
+				b.WriteRune('_')
+			}
+		}
+		b.WriteRune(r)
+	}
+	return b.String()
 }
 
 func fixSchema(prefix string, schemaUri string) (string, error) {
+	cacheKey := prefix + ":" + schemaUri
+	if cached, ok := schemaCache.get(cacheKey); ok {
+		return cached, nil
+	}
+
 	parts, err := extractSchema(schemaUri)
 	if err != nil {
 		return "", fmt.Errorf("error parsing schema path: %w", err)
@@ -93,7 +103,11 @@ func fixSchema(prefix string, schemaUri string) (string, error) {
 	vendor := strings.ReplaceAll(parts.Vendor, ".", "_")
 	name := insertUnderscores(parts.Name)
 
-	return strings.ToLower(strings.Join([]string{prefix, vendor, name, parts.Model}, "_")), nil
+	result := strings.ToLower(strings.Join([]string{prefix, vendor, name, parts.Model}, "_"))
+
+	schemaCache.put(cacheKey, result)
+
+	return result, nil
 }
 
 func shredContexts(contexts string) ([]KeyVal, error) {
@@ -104,7 +118,7 @@ func shredContexts(contexts string) ([]KeyVal, error) {
 		return nil, fmt.Errorf("error unmarshaling context JSON: %w", err)
 	}
 
-	var distinctContexts = make(map[string][]any)
+	var distinctContexts = make(map[string][]any, 8)
 	for _, entry := range ctxts.Data {
 		key, err := fixSchema("contexts", entry.Schema) // is key a bad var name here?
 		if err != nil {
@@ -116,8 +130,8 @@ func shredContexts(contexts string) ([]KeyVal, error) {
 		if _, present := distinctContexts[key]; present {
 			distinctContexts[key] = append(distinctContexts[key], data)
 		} else {
-			distinctContexts[key] = make([]any, 1)
-			distinctContexts[key][0] = data
+			distinctContexts[key] = make([]any, 0, 4)
+			distinctContexts[key] = append(distinctContexts[key], data)
 		}
 	}
 
