@@ -81,11 +81,15 @@ func insertUnderscores(s string) string {
 	for i, r := range s {
 		if unicode.IsUpper(r) && i > 0 {
 			prev := rune(s[i-1])
-			if prev != '_' {
+			if prev != '_' && prev != '-' {
 				b.WriteRune('_')
 			}
 		}
-		b.WriteRune(r)
+		if r == '-' {
+			b.WriteRune('_')
+		} else {
+			b.WriteRune(r)
+		}
 	}
 	return b.String()
 }

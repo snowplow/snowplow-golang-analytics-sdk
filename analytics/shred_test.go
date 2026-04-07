@@ -46,62 +46,113 @@ func TestExtractSchema(t *testing.T) {
 
 func BenchmarkExtractSchema(b *testing.B) {
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		extractSchema("iglu:com.acme.data/some_event/jsonschema/15-34-1")
 	}
 }
 
 func TestInsertUnderscores(t *testing.T) {
-	assert := assert.New(t)
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "camel case",
+			input:    "ThisStringIsCamelCase",
+			expected: "This_String_Is_Camel_Case",
+		},
+		{
+			name:     "mixture with dash",
+			input:    "this_String-IsAMixture",
+			expected: "this_String_Is_A_Mixture",
+		},
+		{
+			name:     "empty string",
+			input:    "",
+			expected: "",
+		},
+		{
+			name:     "single character",
+			input:    "A",
+			expected: "A",
+		},
+		{
+			name:     "no uppercase",
+			input:    "alllowercase",
+			expected: "alllowercase",
+		},
+		{
+			name:     "multi-byte UTF-8",
+			input:    "caféLatte",
+			expected: "café_Latte",
+		},
+		{
+			name:     "consecutive uppercase after multi-byte",
+			input:    "überCoolThing",
+			expected: "über_Cool_Thing",
+		},
+	}
 
-	// camel case
-	underscoredCamelCase := insertUnderscores("ThisStringIsCamelCase")
-	assert.Equal("This_String_Is_Camel_Case", underscoredCamelCase)
-
-	// abomination
-	underscoredMixture := insertUnderscores("this_StringIsAMixture")
-	assert.Equal("this_String_Is_A_Mixture", underscoredMixture)
-
-	// empty string
-	assert.Equal("", insertUnderscores(""))
-
-	// single character
-	assert.Equal("A", insertUnderscores("A"))
-
-	// no uppercase
-	assert.Equal("alllowercase", insertUnderscores("alllowercase"))
-
-	// multi-byte UTF-8
-	assert.Equal("café_Latte", insertUnderscores("caféLatte"))
-
-	// consecutive uppercase after multi-byte char
-	assert.Equal("über_Cool_Thing", insertUnderscores("überCoolThing"))
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, insertUnderscores(tt.input))
+		})
+	}
 }
 
 func BenchmarkInsertUnderscores(b *testing.B) {
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		insertUnderscores("ThisStringIsCamelCase")
 	}
 }
 
 func TestFixSchema(t *testing.T) {
-	assert := assert.New(t)
+	tests := []struct {
+		name      string
+		prefix    string
+		schemaUri string
+		expected  string
+		wantErr   bool
+	}{
+		{
+			name:      "underscore in name",
+			prefix:    "unstruct",
+			schemaUri: "iglu:com.acme.data/some_event/jsonschema/15-34-1",
+			expected:  "unstruct_com_acme_data_some_event_15",
+		},
+		{
+			name:      "dash in name",
+			prefix:    "unstruct",
+			schemaUri: "iglu:com.acme.data/some-event/jsonschema/15-34-1",
+			expected:  "unstruct_com_acme_data_some_event_15",
+		},
+		{
+			name:      "invalid schema",
+			prefix:    "unstruct",
+			schemaUri: "iglu:com.broken.path//jsonschema/1-0-0",
+			wantErr:   true,
+		},
+	}
 
-	// correct value
-	fixedSchema, err := fixSchema("unstruct", "iglu:com.acme.data/some_event/jsonschema/15-34-1")
-	assert.Nil(err)
-	assert.Equal("unstruct_com_acme_data_some_event_15", fixedSchema)
-
-	// invalid schema
-	brokenSchema, err := fixSchema("unstruct", "iglu:com.broken.path//jsonschema/1-0-0")
-	assert.NotNil(err)
-	assert.Zero(brokenSchema)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := fixSchema(tt.prefix, tt.schemaUri)
+			if tt.wantErr {
+				assert.NotNil(t, err)
+				assert.Zero(t, result)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, tt.expected, result)
+			}
+		})
+	}
 }
 
 func BenchmarkFixSchema(b *testing.B) {
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		fixSchema("unstruct", "iglu:com.acme.data/some_event/jsonschema/15-34-1")
 	}
 }
@@ -126,7 +177,7 @@ func TestShredContexts(t *testing.T) {
 
 func BenchmarkShredContexts(b *testing.B) {
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		shredContexts(ctxt)
 	}
 }
@@ -149,7 +200,7 @@ func TestShredUnstruct(t *testing.T) {
 
 func BenchmarkShredUnstruct(b *testing.B) {
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		shredUnstruct(unstruct)
 	}
 }
@@ -157,14 +208,14 @@ func BenchmarkShredUnstruct(b *testing.B) {
 func BenchmarkFixSchemaRepeated(b *testing.B) {
 	b.ReportAllocs()
 	uri := "iglu:com.acme.data/some_event/jsonschema/15-34-1"
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		fixSchema("unstruct", uri)
 	}
 }
 
 func BenchmarkFixSchemaUnique(b *testing.B) {
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+	for i := 0; b.Loop(); i++ {
 		uri := "iglu:com.test/event_" + string(rune(i)) + "/jsonschema/1-0-0"
 		fixSchema("unstruct", uri)
 	}
@@ -202,7 +253,7 @@ func BenchmarkFixSchemaParallel10(b *testing.B) {
 func BenchmarkInsertUnderscoresLong(b *testing.B) {
 	b.ReportAllocs()
 	longString := "ThisIsAReallyLongCamelCaseStringWithManyWordsToTestPerformance"
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		insertUnderscores(longString)
 	}
 }
