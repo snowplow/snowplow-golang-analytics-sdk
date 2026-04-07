@@ -46,7 +46,7 @@ func TestExtractSchema(t *testing.T) {
 
 func BenchmarkExtractSchema(b *testing.B) {
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		extractSchema("iglu:com.acme.data/some_event/jsonschema/15-34-1")
 	}
 }
@@ -57,6 +57,10 @@ func TestInsertUnderscores(t *testing.T) {
 	// camel case
 	underscoredCamelCase := insertUnderscores("ThisStringIsCamelCase")
 	assert.Equal("This_String_Is_Camel_Case", underscoredCamelCase)
+
+	// mixture with dash case
+	mixtureWithDash := insertUnderscores("this_String-IsAMixture")
+	assert.Equal("this_String_Is_A_Mixture", mixtureWithDash)
 
 	// abomination
 	underscoredMixture := insertUnderscores("this_StringIsAMixture")
@@ -80,7 +84,7 @@ func TestInsertUnderscores(t *testing.T) {
 
 func BenchmarkInsertUnderscores(b *testing.B) {
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		insertUnderscores("ThisStringIsCamelCase")
 	}
 }
@@ -93,6 +97,11 @@ func TestFixSchema(t *testing.T) {
 	assert.Nil(err)
 	assert.Equal("unstruct_com_acme_data_some_event_15", fixedSchema)
 
+	// correct value with dash
+	fixedSchema, err = fixSchema("unstruct", "iglu:com.acme.data/some-event/jsonschema/15-34-1")
+	assert.Nil(err)
+	assert.Equal("unstruct_com_acme_data_some_event_15", fixedSchema)
+
 	// invalid schema
 	brokenSchema, err := fixSchema("unstruct", "iglu:com.broken.path//jsonschema/1-0-0")
 	assert.NotNil(err)
@@ -101,7 +110,7 @@ func TestFixSchema(t *testing.T) {
 
 func BenchmarkFixSchema(b *testing.B) {
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		fixSchema("unstruct", "iglu:com.acme.data/some_event/jsonschema/15-34-1")
 	}
 }
@@ -126,7 +135,7 @@ func TestShredContexts(t *testing.T) {
 
 func BenchmarkShredContexts(b *testing.B) {
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		shredContexts(ctxt)
 	}
 }
@@ -149,7 +158,7 @@ func TestShredUnstruct(t *testing.T) {
 
 func BenchmarkShredUnstruct(b *testing.B) {
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		shredUnstruct(unstruct)
 	}
 }
@@ -157,14 +166,14 @@ func BenchmarkShredUnstruct(b *testing.B) {
 func BenchmarkFixSchemaRepeated(b *testing.B) {
 	b.ReportAllocs()
 	uri := "iglu:com.acme.data/some_event/jsonschema/15-34-1"
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		fixSchema("unstruct", uri)
 	}
 }
 
 func BenchmarkFixSchemaUnique(b *testing.B) {
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+	for i := 0; b.Loop(); i++ {
 		uri := "iglu:com.test/event_" + string(rune(i)) + "/jsonschema/1-0-0"
 		fixSchema("unstruct", uri)
 	}
@@ -202,7 +211,7 @@ func BenchmarkFixSchemaParallel10(b *testing.B) {
 func BenchmarkInsertUnderscoresLong(b *testing.B) {
 	b.ReportAllocs()
 	longString := "ThisIsAReallyLongCamelCaseStringWithManyWordsToTestPerformance"
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		insertUnderscores(longString)
 	}
 }
