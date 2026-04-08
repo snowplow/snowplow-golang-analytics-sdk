@@ -52,53 +52,34 @@ func BenchmarkExtractSchema(b *testing.B) {
 }
 
 func TestInsertUnderscores(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    string
-		expected string
-	}{
-		{
-			name:     "camel case",
-			input:    "ThisStringIsCamelCase",
-			expected: "This_String_Is_Camel_Case",
-		},
-		{
-			name:     "mixture with dash",
-			input:    "this_String-IsAMixture",
-			expected: "this_String_Is_A_Mixture",
-		},
-		{
-			name:     "empty string",
-			input:    "",
-			expected: "",
-		},
-		{
-			name:     "single character",
-			input:    "A",
-			expected: "A",
-		},
-		{
-			name:     "no uppercase",
-			input:    "alllowercase",
-			expected: "alllowercase",
-		},
-		{
-			name:     "multi-byte UTF-8",
-			input:    "caféLatte",
-			expected: "café_Latte",
-		},
-		{
-			name:     "consecutive uppercase after multi-byte",
-			input:    "überCoolThing",
-			expected: "über_Cool_Thing",
-		},
-	}
+	assert := assert.New(t)
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expected, insertUnderscores(tt.input))
-		})
-	}
+	// camel case
+	underscoredCamelCase := insertUnderscores("ThisStringIsCamelCase")
+	assert.Equal("This_String_Is_Camel_Case", underscoredCamelCase)
+
+	// mixture with dash case
+	mixtureWithDash := insertUnderscores("this_String-IsAMixture")
+	assert.Equal("this_String_Is_A_Mixture", mixtureWithDash)
+
+	// abomination
+	underscoredMixture := insertUnderscores("this_StringIsAMixture")
+	assert.Equal("this_String_Is_A_Mixture", underscoredMixture)
+
+	// empty string
+	assert.Equal("", insertUnderscores(""))
+
+	// single character
+	assert.Equal("A", insertUnderscores("A"))
+
+	// no uppercase
+	assert.Equal("alllowercase", insertUnderscores("alllowercase"))
+
+	// multi-byte UTF-8
+	assert.Equal("café_Latte", insertUnderscores("caféLatte"))
+
+	// consecutive uppercase after multi-byte char
+	assert.Equal("über_Cool_Thing", insertUnderscores("überCoolThing"))
 }
 
 func BenchmarkInsertUnderscores(b *testing.B) {
@@ -109,45 +90,22 @@ func BenchmarkInsertUnderscores(b *testing.B) {
 }
 
 func TestFixSchema(t *testing.T) {
-	tests := []struct {
-		name      string
-		prefix    string
-		schemaUri string
-		expected  string
-		wantErr   bool
-	}{
-		{
-			name:      "underscore in name",
-			prefix:    "unstruct",
-			schemaUri: "iglu:com.acme.data/some_event/jsonschema/15-34-1",
-			expected:  "unstruct_com_acme_data_some_event_15",
-		},
-		{
-			name:      "dash in name",
-			prefix:    "unstruct",
-			schemaUri: "iglu:com.acme.data/some-event/jsonschema/15-34-1",
-			expected:  "unstruct_com_acme_data_some_event_15",
-		},
-		{
-			name:      "invalid schema",
-			prefix:    "unstruct",
-			schemaUri: "iglu:com.broken.path//jsonschema/1-0-0",
-			wantErr:   true,
-		},
-	}
+	assert := assert.New(t)
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result, err := fixSchema(tt.prefix, tt.schemaUri)
-			if tt.wantErr {
-				assert.NotNil(t, err)
-				assert.Zero(t, result)
-			} else {
-				assert.Nil(t, err)
-				assert.Equal(t, tt.expected, result)
-			}
-		})
-	}
+	// correct value
+	fixedSchema, err := fixSchema("unstruct", "iglu:com.acme.data/some_event/jsonschema/15-34-1")
+	assert.Nil(err)
+	assert.Equal("unstruct_com_acme_data_some_event_15", fixedSchema)
+
+	// correct value with dash
+	fixedSchema, err = fixSchema("unstruct", "iglu:com.acme.data/some-event/jsonschema/15-34-1")
+	assert.Nil(err)
+	assert.Equal("unstruct_com_acme_data_some_event_15", fixedSchema)
+
+	// invalid schema
+	brokenSchema, err := fixSchema("unstruct", "iglu:com.broken.path//jsonschema/1-0-0")
+	assert.NotNil(err)
+	assert.Zero(brokenSchema)
 }
 
 func BenchmarkFixSchema(b *testing.B) {
